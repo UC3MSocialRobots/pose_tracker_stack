@@ -1,0 +1,19 @@
+<package>
+  <description brief="pose_labeler">
+	
+	This package acts as a bridge between the AD's pose_labeler_skill and the ROS pose_tracker package
+	This package uses a node which subscribes to AD LABELED_POSE events and transforms them to a LabeledPose.msg
+
+  </description>
+  <author>Victor Gonzalez-Pacheco</author>
+  <license>GPL v.2</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pose_labeler_bridge</url>
+
+  <depend package="rospy"/>
+  <depend package="pose_msgs"/>
+  <depend package="asr_msgs"/>
+  <depend package="rostest"/>
+</package>
+
+

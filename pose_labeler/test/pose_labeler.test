@@ -1,0 +1,27 @@
+<launch>
+    <!-- Params -->
+    <rosparam command='load' file="$(find pose_labeler)/yaml/params.yaml"/>
+    
+    <group ns="ns_bad"> 
+      <!-- Pulling this test to a separate namespace 
+           to ensure node init fails -->
+      <test test-name="PoseLabelerBadInit"
+            pkg="pose_labeler"
+            type="test_pose_labeler_bad_init.py"
+            time-limit="5.0"/>
+    </group>
+    <test test-name="PoseLabelerInitsWell"
+          pkg="pose_labeler"
+          type="test_pose_labeler_good_init.py"
+          time-limit="10"/>
+
+    <node name="pose_labeler" 
+          pkg="pose_labeler" 
+          type="pose_labeler_node.py" 
+          required="true" output="screen"/>
+    <test test-name="PoseLabelerTestCase"
+          pkg="pose_labeler"
+          type="test_pose_labeler.py"
+          time-limit="60.0"/>
+</launch>
+

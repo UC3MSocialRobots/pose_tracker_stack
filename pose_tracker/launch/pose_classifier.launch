@@ -1,0 +1,18 @@
+<launch>
+  <!-- This launch file is needed to have the skeleton tracking running 
+  <include file="$(find skeleton_markers)/launch/markers.launch" /> i-->
+
+  <arg name="model" />
+
+  <!-- Main node -->
+  <node name="classifier" pkg="pose_tracker" type="pose_classifier" args="$(arg model)" required="true"/>
+
+  <!-- AD servers -->
+  <!-- Not available for now 
+  	<node name="EventServer" pkg="ad_core" type="server_events.exe" required="true"/>
+  	<node name="MCPServer" pkg="ad_core" type="server_mcp.exe" required="true"/>
+ -->
+
+  <!-- AD-ROS bridge. To send AD speech events to ros topics   -->
+  <node name="pose_teller" pkg="pose_labeler" type="pose_teller" required="true" /> 
+</launch>

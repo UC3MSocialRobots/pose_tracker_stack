@@ -1,0 +1,32 @@
+<package>
+  <description brief="pose_tracker">
+	Package with tools to track the pose of a human. 
+	
+  </description>
+  <author>Victor Gonzalez Pacheco vgonzale at ing.uc3m.es</author>
+  <license>GPL v3</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pose_tracker</url>
+  
+  <depend package="rospy"/>
+  <depend package="pose_labeler"/>
+  <depend package="kinect"/>
+  
+  <depend package="param_utils"/>
+  <depend package="std_msgs"/>
+  <depend package="rostest"/>
+  <depend package="rosunit"/>
+<!--  
+  <depend package="roscpp"/>
+-->
+
+<!-- External dependencies to python packages -->
+  <rosdep name="numpy"/>
+  <rosdep name="pandas"/>
+  <rosdep name="scikit-learn"/>
+  <rosdep name="toolz"/>
+  <rosdep name="mock"/>
+
+</package>
+
+

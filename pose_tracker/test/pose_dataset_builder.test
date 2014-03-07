@@ -1,0 +1,29 @@
+<launch>
+  <arg name="config" 
+     default="$(find pose_tracker)/params/pdb_default_config.yaml" />
+  
+  <!-- Params -->
+  <rosparam command='load' file="$(find pose_labeler)/yaml/params.yaml"/>
+
+  <test test-name="TestCallOnlyInDecorator"
+        pkg="pose_tracker"
+        type="test_call_only_in.py"
+        time-limit="60.0"/>
+
+  <test test-name="TestPoseDatasetBuilderInit"
+        pkg="pose_tracker"
+        type="test_PoseDatasetBuilder_init.py"
+        time-limit="60.0"/>
+        <rosparam command='load' file="$(arg config)"/>
+        <rosparam command='load' 
+                  file="$(find kinect)/params/kinect_default_params.yaml"/>
+
+  <test test-name="TestPoseDatasetBuilder"
+        pkg="pose_tracker"
+        type="test_PoseDatasetBuilder.py"
+        time-limit="60.0"/>
+        <rosparam command='load' file="$(arg config)"/>
+        <rosparam command='load' 
+                  file="$(find kinect)/params/kinect_default_params.yaml"/>
+        
+</launch>
