@@ -271,10 +271,11 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         
     # @unittest.skip("Skpping this Test")
     @patch('PoseDatasetIO.PoseDatasetIO')
+    @patch.object(pdb.PoseDatasetBuilder, '_write_labels_to_file')
     @patch.object(skq.SkeletonQueue, '_prepare_chunk')
     @patch.object(skq.SkeletonQueue, '_chunk_to_data_frame')
     def test_state_finishing_writes_all_labels(self, 
-                                            mock_todf, mock_pchunk, mock_write):
+        mock_todf, mock_pchunk, mock_label_write, mock_write):
         self.node.state_initiating() # Init dataset
         self.node.curr_state = pdb.STATE_FINISHING
         # TODO:
@@ -285,8 +286,9 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.node.state_finishing()
         # Check if we write to file the remaining data from the skel queue
         # I do it by checking if the call was called properly
-        call_write = mcall('used_labels', Series(list(self.node.all_labels)))
-        self.assertIn(call_write, mock_write.mock_calls)
+        #call_write = mcall('used_labels', Series(list(self.node.all_labels)))
+        call_write = mcall('used_labels')
+        self.assertIn(call_write, mock_label_write.mock_calls)
        
 
     #@unittest.skip("Skpping this Test")    

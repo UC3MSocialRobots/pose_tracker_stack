@@ -293,6 +293,14 @@ class PoseDatasetBuilder():
         self.append_data = True
     
 
+    def _write_labels_to_file(self, table_name):
+        '''Helper method that writes all labels to dataset  
+           params: 
+           @name: table_name 
+           the name of the table where the labels will be stored'''
+        self.data_writer.write(table_name, 
+                                    pd.Series(list(self.all_labels)))
+
     def state_finishing(self):
         ''' Transitionalstate to state_end.
             Dumps remaining skeletons to the dataset and closes the file'''
@@ -304,9 +312,8 @@ class PoseDatasetBuilder():
                                     table=True, append=self.append_data)
             
             # Store a list with all labels if data in dataset
-            self.data_writer.write('used_labels', 
-                                    pd.Series(list(self.all_labels)))
-
+            self._write_labels_to_file('used_labels')
+           
             # Close the file
             self.data_writer.store.close()
             self.ready_pub.publish(self.dataset_name)
