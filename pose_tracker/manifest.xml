@@ -26,6 +26,7 @@
   <rosdep name="scikit-learn"/>
   <rosdep name="toolz"/>
   <rosdep name="mock"/>
+  <rosdep name="PyTables"/>
 
 </package>
 
