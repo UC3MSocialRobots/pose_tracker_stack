@@ -102,15 +102,16 @@ class PoseDatasetIOWriterTestCase(unittest.TestCase):
     # def test_columns_when_write(self, mock_put):
     #     pass
 
-    def test_write_invalid_data(self, mock_put):
+    def test_write_invalid_data_raises_an_exception(self, mock_put):
         not_a_string = 12345
-        empty_list = []
+        # empty_list = []
+        empty_df = pd.DataFrame()
         self.assertRaises(TypeError, 
                           self.writer.write, (not_a_string, self.dataset))
-        self.assertRaises(ValueError, 
-                          self.writer.write, *('test_table', empty_list))
         self.assertRaises(TypeError, 
                           self.writer.write, ('test_table', self.invalid_dataset))
+        self.assertRaises(ValueError, 
+                          self.writer.write, *('test_table', empty_df))
 
     def test_write(self, mock_put):
         # args = (self.dataset, 'test_table')

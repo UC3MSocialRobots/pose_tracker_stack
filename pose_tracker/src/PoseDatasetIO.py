@@ -103,12 +103,12 @@ class PoseDatasetIO(object):
         if not isinstance(table_name, str):
             raise TypeError("Table name must be a string")
         
-        if not chunk:
-            # rospy.logdebug("Nothing to write to the file")
-            raise ValueError("data chunk is empty. Nothing to write")
-        
         if not isinstance(chunk, pd.DataFrame):
             raise TypeError("chunk is not a pandas.DataFrame. Could not write")
+
+        if chunk.empty:
+            # rospy.logdebug("Nothing to write to the file")
+            raise ValueError("data chunk is empty. Nothing to write")
 
         self.store.put(table_name, chunk, **kwargs)
         
