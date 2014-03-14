@@ -33,19 +33,20 @@ ALL_STATES = ( STATE_INIT, STATE_IDLE, STATE_PROCESSING,
 def call_only_in(states):
     '''Decorator method that ensures that decorated method is
        only called in the entered states.
-       attribs: 
-        :name: states 'A list of the states in which the decorated method
-                       will be called'
-        :type: list
-       eg.:
-        @_call_only_in([STATE_PROCESSING,])
-        def f1(self): 
-            print "f1 called!" 
-        self.curr_state = STATE_IDLE
-        f1() # f1 does nothing
-        self.curr_state = STATE_PROCESSING
-        f1() 
-        >>> 'f1 called!'
+
+       @param states: 'A list of the states in which the decorated method will be called'
+              
+       Example: 
+
+            >>> @_call_only_in([STATE_PROCESSING,])
+            ... def f1(self): 
+            ...     print "f1 called!" 
+            >>> builder = PoseDatasetBuilder()
+            >>> builder.curr_state = STATE_IDLE
+            >>> f1() # f1 does nothing
+            self.curr_state = STATE_PROCESSING
+            >>> f1() 
+            'f1 called!'
     '''
     # Helper func to convert an object to an iterable (unless already it is one)
     as_iter = lambda i: i if hasattr(i, '__iter__') else (i,)
@@ -65,7 +66,9 @@ def call_only_in(states):
 
 
 class PoseDatasetBuilder():
-    ''' Class that builds a dataset'''
+    ''' Class that builds a dataset
+        @keyword nodename: The name of the node
+    '''
     def __init__(self, **kwargs):
         name = kwargs.get('node_name', DEFAULT_NAME)
         rospy.init_node(name)
@@ -123,8 +126,8 @@ class PoseDatasetBuilder():
 
     def _make_dataset_columns(self):
         ''' Helper method that returs a list with dataset columns.
-            NOTE: self.joint_names and self.attrib_names must be declared
-            prior to call this method '''
+        @note:: PoseDatasetBuilder.joint_names and PoseDatasetBuilder.attrib_names 
+                must be declared prior to call this method '''
         return map('_'.join, it.product(self.joint_names, self.attrib_names))
 
     def load_parameters(self):
@@ -179,7 +182,11 @@ class PoseDatasetBuilder():
 
     def change_state(self, new_state):
         ''' Tries to change the current state. 
-            If the state change is not allowed, it does nothing.'''
+            If the state change is not allowed, it does nothing.
+
+            @param new_state: the new state to be set. Should be included in 
+                              I{ALL_STATES}
+        '''
         if new_state == self.curr_state: # Exit if the sate is the same
             rospy.logdebug("We are already in " + self.curr_state)           
             return
