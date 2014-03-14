@@ -8,7 +8,7 @@ from itertools import chain
 
 import kinect.msg as kin
 import kinect.nite_skeleton_msg_utils as nsku
-import SkeletonQueue as skq
+import pose_tracker.SkeletonQueue as skq
 
 
 class TestSkeletonQueue(unittest.TestCase):

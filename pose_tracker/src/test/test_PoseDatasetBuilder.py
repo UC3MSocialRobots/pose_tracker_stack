@@ -9,9 +9,9 @@ from mock import call as mcall
 
 from std_msgs.msg import String
 import kinect.msg as kin
-import pose_dataset_builder_node as pdb
-import SkeletonQueue as skq
-import PoseDatasetIO as pdio
+import pose_tracker.pose_dataset_builder_node as pdb
+import pose_tracker.SkeletonQueue as skq
+import pose_tracker.PoseDatasetIO as pdio
 import param_utils as pu
 
 
@@ -267,7 +267,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
 
         
     # @unittest.skip("Skpping this Test")
-    @patch('PoseDatasetIO.PoseDatasetIO')
+    @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO')
     @patch.object(pdb.PoseDatasetBuilder, '_write_labels_to_file')
     @patch.object(skq.SkeletonQueue, '_prepare_chunk')
     @patch.object(skq.SkeletonQueue, '_chunk_to_data_frame')

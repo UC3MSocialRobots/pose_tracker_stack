@@ -7,7 +7,7 @@ import unittest
 # import pandas as pd
 from itertools import chain
 
-import PoseDatasetIO as pdio
+import pose_tracker.PoseDatasetIO as pdio
 
 
 class DateParserTestCase(unittest.TestCase):

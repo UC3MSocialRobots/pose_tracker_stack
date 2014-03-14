@@ -5,7 +5,7 @@ import roslib; roslib.load_manifest(PKG)
 # import rospy
 import unittest
 
-import pose_dataset_builder_node as pdb
+import pose_tracker.pose_dataset_builder_node as pdb
 
 class TestCallOnlyIn(unittest.TestCase):
     """Tests"""

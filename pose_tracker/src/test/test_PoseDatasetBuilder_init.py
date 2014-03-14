@@ -6,7 +6,7 @@ import rospy
 import unittest
 from mock import patch, MagicMock
 
-import pose_dataset_builder_node as pdb
+import pose_tracker.pose_dataset_builder_node as pdb
 import param_utils as pu
 
 class TestPoseDatasetBuilderInit(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestPoseDatasetBuilderInit(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch('PoseDatasetIO.PoseDatasetIO')
+    @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO')
     def test_init_ok(self, mock_pdio):
         try:
             pdb.PoseDatasetBuilder()

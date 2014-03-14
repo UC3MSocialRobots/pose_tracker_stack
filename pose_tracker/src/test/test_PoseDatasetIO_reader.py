@@ -6,7 +6,7 @@ from mock import patch
 import numpy as np
 import pandas as pd
 
-import PoseDatasetIO as pdio
+import pose_tracker.PoseDatasetIO as pdio
 
 
 @patch.object(pd.io.pytables.HDFStore, 'put')
