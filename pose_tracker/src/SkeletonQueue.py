@@ -1,14 +1,11 @@
 import roslib; roslib.load_manifest('pose_tracker')
 import rospy
 
-from std_msgs.msg import String
-import kinect.msg as kin
-
 import collections as col
 import pandas as pd
 import itertools as it
 
-import kinect.nite_msg_utils.nite_skeleton_utils as nsku
+import kinect.nite_skeleton_msg_utils as nsku
 
 class SkeletonQueue(object):
     """docstring for SkeletonQueue"""

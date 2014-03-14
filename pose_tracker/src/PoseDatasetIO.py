@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # import roslib; roslib.load_manifest('pose_tracker')
 # import rospy
-# import kinect.msg as kin
+
 # import numpy as np
 import pandas as pd
 import datetime

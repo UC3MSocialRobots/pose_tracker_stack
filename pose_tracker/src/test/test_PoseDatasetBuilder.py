@@ -6,12 +6,9 @@ import rospy
 import unittest
 from mock import patch
 from mock import call as mcall
-from pandas import Series
-from itertools import chain
 
 from std_msgs.msg import String
 import kinect.msg as kin
-import kinect.nite_msg_utils.nite_skeleton_utils as nsku
 import pose_dataset_builder_node as pdb
 import SkeletonQueue as skq
 import PoseDatasetIO as pdio

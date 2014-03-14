@@ -7,7 +7,6 @@ from std_msgs.msg import String
 import kinect.msg as kin
 
 import datetime
-import collections as col
 import pandas as pd
 import itertools as it
 from functools import wraps
@@ -16,7 +15,6 @@ from functools import wraps
 import param_utils as pu
 import PoseDatasetIO as pdio
 import SkeletonQueue as skq
-import kinect.nite_msg_utils.nite_skeleton_utils as nsku
 
 
 DEFAULT_NAME = 'pose_dataset_builder'

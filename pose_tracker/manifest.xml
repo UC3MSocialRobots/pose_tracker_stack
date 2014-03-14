@@ -11,11 +11,11 @@
   <depend package="rospy"/>
   <depend package="pose_labeler"/>
   <depend package="kinect"/>
-  
   <depend package="param_utils"/>
   <depend package="std_msgs"/>
-  <depend package="rostest"/>
+
   <depend package="rosunit"/>
+  <depend package="rostest"/>
 <!--  
   <depend package="roscpp"/>
 -->
@@ -27,7 +27,6 @@
   <rosdep name="toolz"/>
   <rosdep name="mock"/>
   <rosdep name="PyTables"/>
-
 </package>
 
 

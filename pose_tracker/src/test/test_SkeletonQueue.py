@@ -1,20 +1,14 @@
 #!/usr/bin/env python
 PKG = 'pose_tracker'
 import roslib; roslib.load_manifest(PKG)
-import rospy
+
 import unittest
 from mock import patch
-from mock import call as mcall
-from pandas import Series
 from itertools import chain
 
-from std_msgs.msg import String
 import kinect.msg as kin
-import kinect.nite_msg_utils.nite_skeleton_utils as nsku
-import pose_dataset_builder_node as pdb
+import kinect.nite_skeleton_msg_utils as nsku
 import SkeletonQueue as skq
-import PoseDatasetIO as pdio
-import param_utils as pu
 
 
 class TestSkeletonQueue(unittest.TestCase):
