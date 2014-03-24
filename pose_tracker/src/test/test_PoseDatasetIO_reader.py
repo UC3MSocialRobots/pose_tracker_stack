@@ -28,6 +28,30 @@ class PoseDatasetIOReaderTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def _build_dataset(self):
+        ''' Helper function to create fake datasets'''
+        cols = tuple('ABCDE')
+        ind = ('fist','second', 'third','fourth')
+        self.dataset = pd.DataFrame(np.linspace(1,20,20).reshape(4,5),
+                                    columns=cols, index=ind)
+        self.invalid_dataset = np.linspace(1,20,20).reshape(4,5)
+
+        self.ds_file = \
+            pdio.PoseDatasetIO(dataset='/tmp/reader_dataset.h5', columns=cols)
+        self.ds_file.create_dataset()
+
+    def test_read_raises_IOError_if_file_not_found():
+        pass
+
+    def test_read_raises_IOError_if_dataset_not_created():
+        pass
+    
+    def test_get_metadata_raises_IOError_if_no_metadata_has_been_entered():
+        pass
+    
+    def test_get_metadata():
+        pass
+    
     def test_read(self, mock_put):
         pass
 
@@ -38,6 +62,6 @@ if __name__ == '__main__':
     import rosunit
     # rosunit.unitrun(PKG, 'test_DateParser', DateParserTestCase)
     # rosunit.unitrun(PKG, 'test_PoseDatasetIO', PoseDatasetIOInitTestCase)
-    rosunit.unitrun(PKG, 'test_PoseDatasetIOWriter', PoseDatasetIOReaderTestCase,
+    rosunit.unitrun(PKG, 'test_PoseDatasetIOReader', PoseDatasetIOReaderTestCase,
         coverage_packages=['../PoseDatasetIO.py',])
     # rosunit.unitrun(PKG, 'test_PoseDatasetIOReader', PoseDatasetIOReaderTestCase)

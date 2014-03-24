@@ -24,7 +24,7 @@ class SkeletonQueue(object):
     def clear(self):
         ''' removes all elements of the queue'''
         self.skeleton_queue.clear()
-    
+
     def _check_joints(self, joint_names1, joint_names2):
         ''' Raises TypeError if entered parameters differ'''
         if set(joint_names1) != set(joint_names2):

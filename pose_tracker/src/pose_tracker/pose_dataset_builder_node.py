@@ -320,7 +320,8 @@ class PoseDatasetBuilder():
             self._write_labels_to_file('used_labels')
            
             # Close the file
-            self.data_writer.store.close()
+            # self.data_writer.store.close()
+            self.data_writer.close()
             self.ready_pub.publish(self.dataset_name)
         except:
             rospy.logdebug("In shutdown: file is already closed")

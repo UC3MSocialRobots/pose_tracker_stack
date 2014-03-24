@@ -9,12 +9,12 @@ import datetime
 def parse_date(date):
     ''' An utility function to parse the date used in the dataset metadata.
         Atributes:
-        :date: The date in a form of a string
+        @param date: The date in a form of a string
                 Allowed formats: 
                     "YYYY-MM-DD", "YYYY-MM-DD hh:mm" and "YYYY-MM-DD hh:mm:ss" 
                 See ISO 8601 For more information. 
-        Return: the entered date in form of "YYYY-MM-DD hh:mm:ss"
-        Raises: ValueError if entered date is malformed
+        @return: the entered date in form of "YYYY-MM-DD hh:mm:ss"
+        @raise ValueError: if entered date is malformed
         '''
     supported_formats = ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d')
     for fmt in supported_formats:
@@ -37,11 +37,11 @@ class PoseDatasetIO(object):
     def __init__(self, *args, **kwargs):
         ''' Inits the class.
             Arguments:
-            :dataset: the name of the file where the dataset will be written
-            :dataset_columns: The name of the columns for the dataset_table
+            @param dataset: the name of the file where the dataset will be written
+            @param dataset_columns: The name of the columns for the dataset_table
             
-            Raises KeyError if some argument is missing
-            Raises TypeError if dataset is not string or dataset_columns is
+            @raise KeyError: if some argument is missing
+            @raise TypeError: if dataset is not string or dataset_columns is
             not an iterable.'''
 
         self.dataset = kwargs['dataset']
@@ -62,14 +62,17 @@ class PoseDatasetIO(object):
         # print self.dataset
         self.store = pd.HDFStore(self.dataset + '.h5')
       
+    def close(self):
+        '''Closes the dataset file'''
+        self.store.close()
 
     # def prepare_dataset(self, **kwargs):
     def fill_metadata(self, **kwargs):
         ''' Fills the metadata of the dataset.
-            Can be entered the following params:
-            'creator': The creator of the dataset
-            'date': Date in "YYYY-mm-ddTHH:MM" (ISO 8601 date format)'
-            'descr': a string based description of what the dataset contains
+            
+            @keyword creator: The creator of the dataset
+            @keyword date: Date in "YYYY-mm-ddTHH:MM" (ISO 8601 date format)'
+            @keyword descr: string based description of the dataset content
        '''
         creator = kwargs.get('creator', 'Anonymous')
         date = kwargs.get('date', '1900-01-01 00:00')
@@ -82,21 +85,26 @@ class PoseDatasetIO(object):
         description = pd.Series((creator, date, user_descr), 
                                 index=('creator', 'date','descr'))
 
-        self.store.put('description', description)    
+        self.store.put('description', description) 
+
+    def get_metadata(self):
+        ''' Returns the metadata table from the file'''
+        return self.read_table('description')
     
     def write(self, table_name, chunk, **kwargs):
         ''' Writes a chunk of data to the dataset file
             Arguments:
-            :chunk: the pandas.DataFrame to be written to the file
-            :table_name: the name of the table on the file
-            :kwargs: other arguments to be pased to the method.
-                     see 'pandas.io.pytables.HDFStore.put().
+            
+            @param table_name: the name of the table on the file
+            @param chunk: the pandas.DataFrame to be written to the file
+            @keyword: other arguments to be pased to the method.
+                     @see 'pandas.io.pytables.HDFStore.put().
                      Typically are bools "table" and "append"
-            Returns True if succeeds writing data. False otherwise
-
-            Raises TypeError if table_name is not a string
-            Raises ValueError if chunk is empty
-            Raises TypeError fi chunk is not a pandas.DataFrame
+            
+            @raise TypeError: if table_name is not a string
+            @raise TypeError: if chunk is not a pandas.DataFrame
+            @raise ValueError: if chunk is empty
+            
             '''
 
         # print table_name
@@ -113,6 +121,11 @@ class PoseDatasetIO(object):
         self.store.put(table_name, chunk, **kwargs)
         
         
-    def read(self, **kwargs):
-        raise NotImplementedError
-        pass
+    def read_table(self, table_name, **kwargs):
+        ''' Reads the file and returns a dataframe stored in table table_name
+        @type  table: string
+        @param table: The table where to read
+        @return: a pandas dataframe obtained from table table_name
+        @rtype: pandas.DataFrame'''
+
+        return pd.read_hdf(self.dataset + '.h5', table_name)
