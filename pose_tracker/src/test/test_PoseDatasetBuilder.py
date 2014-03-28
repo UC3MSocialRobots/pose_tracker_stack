@@ -4,7 +4,7 @@ NNAME = 'test_PoseDatasetBuilder'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 import unittest
-from mock import patch
+from mock import (MagicMock, patch)
 from mock import call as mcall
 
 from std_msgs.msg import String
@@ -187,83 +187,100 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                     msg="Should not added the skeleton msg to the queue "
                         "when the label is '{}'".format(il))        
 
-    # @unittest.skip("Skpping this Test")            
+    # # @unittest.skip("Skpping this Test")            
+    # @patch.object(pdio, 'parse_date')
+    # @patch.object(pdio.PoseDatasetIO, 'fill_metadata')
+    # def test_state_init(self, mock_fmd, mock_pdate):
+    #     '''check file is created.
+    #        check metadata is filled'''
+    #     mock_pdate.return_value = '2013-11-14 18:45'
+    #     self.node.state_initiating()
+    #     mock_fmd.assert_called_with(**self.node.dataset_metadata)
+    #     self.assertEqual(self.node.curr_state, pdb.STATE_IDLE,
+    #                      msg="Init state should end setting state '{}'"
+    #                          .format(pdb.STATE_IDLE))
+    #     self.node.data_writer.close()
+
+    
+    # @unittest.skip("Skpping this Test")      
     @patch.object(pdio, 'parse_date')
-    @patch.object(pdio.PoseDatasetIO, 'fill_metadata')
-    def test_state_init(self, mock_fmd, mock_pdate):
-        '''check file is created.
-           check metadata is filled'''
+    def test_create_dataset(self, mock_pdate):
+        '''@Todo: Test create_dataset() is called and metadata passed'''
         mock_pdate.return_value = '2013-11-14 18:45'
+        
+        # pdio.pd.HDFstore = MagicMock()
         self.node.state_initiating()
-        mock_fmd.assert_called_with(**self.node.dataset_metadata)
-        self.assertEqual(self.node.curr_state, pdb.STATE_IDLE,
-                         msg="Init state should end setting state '{}'"
-                             .format(pdb.STATE_IDLE))
+        self.assertEqual(self.node.data_writer.dataset, self.node.dataset_name)
+        self.assertEqual(self.node.data_writer.dataset_columns, 
+            self.node.dataset_columns)
+
+
+    
+    # @unittest.skip("Skpping this Test")      
+    @patch.object(pdb.PoseDatasetBuilder, 'create_dataset')
+    def test_state_init(self, mock_create):
+        self.node.state_initiating()
+        mock_create.assert_called()
+        self.assertEqual(pdb.STATE_IDLE, self.node.curr_state)
 
     # @unittest.skip("Skpping this Test")
-    @patch.object(pdio.PoseDatasetIO, 'write')
-    @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
+    @patch.object(pdb.PoseDatasetBuilder, '_do_processing')
     def test_state_processing_does_nothing_if_no_labels(
-        self, mock_todf, mock_write):
+        self, mock_processing): # mock_todf, mock_write):
         # Make sure that we have skeletons in queue but no labels
         [self.node.skeleton_queue.append(skel, None) for skel in ['s1', 's2', 's3']]
         self.node.all_labels = set()
-        self.node.state_initiating() # Fist we should init the dataset
+        # self.node.state_initiating() # Fist we should init the dataset
         self.node.state_processing()
-        self.assertTrue(not mock_todf.called, 
-            msg="SkeletonQueue.pop_n_to_DataFrame() shouldn't have been called")
-        self.assertTrue(not mock_write.called, 
-            msg='PoseDatasetIO.write() should not have been called')
+        self.assertFalse(mock_processing.called)
+        
 
     # @unittest.skip("Skpping this Test")
-    @patch.object(pdio.PoseDatasetIO, 'write')
-    @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
+    # @patch.object(pdio.PoseDatasetIO, 'write')
+    # @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
+    @patch.object(pdb.PoseDatasetBuilder, '_do_processing')
     def test_state_processing_does_nothing_if_no_skeletons_in_queue(
-        self, mock_todf, mock_write):
+        self, mock_processing):
         # Ensure that we have labels but no skeletons in queue
         self.node.all_labels = set(['label1', 'label2', 'label3'])
         self.node.skeleton_queue.clear()
-        self.node.state_initiating() # Fist we should init the dataset
         self.node.state_processing()
-        self.assertTrue(not mock_todf.called, 
-            msg="SkeletonQueue.pop_n_to_DataFrame() shouldn't have been called")
-        self.assertTrue(not mock_write.called, 
-            msg='PoseDatasetIO.write() should not have been called')
+        self.assertFalse(mock_processing.called)
 
     # @unittest.skip("Skpping this Test")
     @patch.object(pdio.PoseDatasetIO, 'write')
     @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
     def test_state_processing(self, mock_todf, mock_write):
         self.node.all_labels = set(['label1', 'label2', 'label3'])
-        [self.node.skeleton_queue.append(skel,None) for skel in ['s1', 's2', 's3']]
-        self.node.state_initiating() # Fist we should init the dataset
+        [self.node.skeleton_queue.append(skel,None) 
+            for skel in ['s1', 's2', 's3']]
+        self.node.data_writer = MagicMock()
+        # self.node.state_initiating() # Fist we should init the dataset
         self.node.state_processing()
         self.assertTrue(mock_todf.called)
-        self.assertTrue(mock_write.called, 
-            msg='PoseDatasetIO.write() should have been called')
         self.assertTrue(self.node.append_data,
             msg="After first write, append_data should be true")
-        pass
 
     # @unittest.skip("Skpping this Test")
-    @patch.object(pdio.PoseDatasetIO, 'write')
-    @patch.object(skq.SkeletonQueue, '_prepare_chunk')
-    @patch.object(skq.SkeletonQueue, '_chunk_to_data_frame')
+    @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO', autospec=True)
+    @patch('pose_tracker.SkeletonQueue.SkeletonQueue', autospec=True)
     def test_state_finishing_writes_remaining_data_from_skel_queue(self, 
-        mock_todf, mock_pchunk, mock_write):
-        self.node.state_initiating() # Init dataset
-        self.node.curr_state = pdb.STATE_FINISHING
+        mock_skq, mock_pdio):
         chunk = [1,2,3,4,5,6]
-        mock_pchunk.return_value = chunk
-        mock_todf.return_value = chunk
-        self.node.state_finishing()
-        
+        mock_skq.pop_n_to_DataFrame.return_value = chunk
+        self.node.skeleton_queue = mock_skq
+        self.node.data_writer = mock_pdio
+        self.node.curr_state = pdb.STATE_FINISHING
+        self.node.run_current_state()
+        # Check if I retrieve data from queue
+        call_pop_n = mcall(-1, self.node.dataset_columns)
+        self.assertIn(call_pop_n, mock_skq.pop_n_to_DataFrame.mock_calls)
         # Check if we write to file the remaining data from the skel queue
         # I do it by checking if the call was called properly
         call_write = mcall(self.node.table_name, chunk, 
             table=True, append=self.node.append_data)
-        self.assertIn(call_write, mock_write.mock_calls)
-            
+        self.assertIn(call_write, mock_pdio.write.mock_calls)
+
 
         
     # @unittest.skip("Skpping this Test")

@@ -67,6 +67,7 @@ def call_only_in(states):
 
 class PoseDatasetBuilder():
     ''' Class that builds a dataset
+
         @keyword nodename: The name of the node
     '''
     def __init__(self, **kwargs):
@@ -179,29 +180,6 @@ class PoseDatasetBuilder():
             rospy.signal_shutdown("node " + rospy.get_name() + \
                 " shot down because parameters were not found")
 
-
-    def change_state(self, new_state):
-        ''' Tries to change the current state. 
-            If the state change is not allowed, it does nothing.
-
-            @param new_state: the new state to be set. Should be included in 
-                              I{ALL_STATES}
-        '''
-        if new_state == self.curr_state: # Exit if the sate is the same
-            rospy.logdebug("We are already in " + self.curr_state)           
-            return
-
-        # Check if we have a valid transition
-        if new_state not in self.transitions.get(self.curr_state):
-            rospy.logdebug("Invalid state transition. State not changed")
-            return
-
-        self.curr_state = new_state
-        self.state_pub.publish(self.curr_state)
-        rospy.logdebug("State changed to " + self.curr_state)       
-        rospy.logwarn("State changed to " + self.curr_state)       
-
-
     # --- Topic callbacks ---
     def command_callback(self, command):
         ''' Processes the received command and sets the current state 
@@ -255,13 +233,8 @@ class PoseDatasetBuilder():
         ''' Service callback to respond the request asking the current state.'''
         return State.StateResponse(self.curr_state)
 
-    # --- State functions --- 
-    def state_initiating(self):
-        ''' Initial state.
-            Creates dataset file and fills metadata.
-            If parameter new_dataset is passed, then 
-        '''
-        rospy.logdebug('State: Initiating')
+    def create_dataset(self):
+        '''Creates dataset file and fills metadata.'''
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
         self.dataset_metadata['date'] = pdio.parse_date(now)
         # Preparing dataset file     
@@ -269,7 +242,14 @@ class PoseDatasetBuilder():
                                               columns=self.dataset_columns)
         self.data_writer.create_dataset()
         self.data_writer.fill_metadata(**self.dataset_metadata)
-        # End Init. Change to state idle
+
+
+    # --- State functions --- 
+    def state_initiating(self):
+        ''' Initial state. 
+            Transitional state that creates dataset and changes state to IDLE'''
+        rospy.logdebug('State: Initiating')
+        self.create_dataset()
         self.change_state(STATE_IDLE)
         
 
@@ -278,6 +258,17 @@ class PoseDatasetBuilder():
         # rospy.loginfo('State: Idle')
         pass
 
+
+    def _do_processing(self):
+        ''' Main function of state_processing. 
+        It's where L{state_processing} does all the stuff '''
+        # We process one chunk per second
+        df = self.skeleton_queue \
+            .pop_n_to_DataFrame(self.rate, self.dataset_columns)
+        self.data_writer.write(self.table_name, df, 
+                                table=True, append=self.append_data)
+        # After the first time we write, we append the data
+        self.append_data = True
 
     def state_processing(self):
         ''' Processes skeletons from the queue and adds them to the dataset'''
@@ -289,20 +280,15 @@ class PoseDatasetBuilder():
         if not self.skeleton_queue:
             rospy.logdebug('Processing state, but Skeletons Queue is empty')
             return
-       # We process one chunk per second
-        df = self.skeleton_queue \
-            .pop_n_to_DataFrame(self.rate,self.dataset_columns)
-        self.data_writer.write(self.table_name, df, 
-                                table=True, append=self.append_data)
-        # After the first time we write, we append the data
-        self.append_data = True
+        # Do stuff
+        self._do_processing()
     
 
     def _write_labels_to_file(self, table_name):
         '''Helper method that writes all labels to dataset  
-           params: 
-           @name: table_name 
-           the name of the table where the labels will be stored'''
+           
+           @param table_name: the name of the table 
+                              where the labels will be stored'''
         self.data_writer.write(table_name, 
                                     pd.Series(list(self.all_labels)))
 
@@ -320,18 +306,51 @@ class PoseDatasetBuilder():
             self._write_labels_to_file('used_labels')
            
             # Close the file
-            # self.data_writer.store.close()
+            #self.data_writer.store.close()
             self.data_writer.close()
             self.ready_pub.publish(self.dataset_name)
         except:
             rospy.logdebug("In shutdown: file is already closed")
         self.change_state(STATE_END)
-        self.states[self.curr_state]()
+        self.run_state(STATE_END)
 
 
     def state_end(self):
         ''' Final state of the state machine. Does nothing '''
         rospy.loginfo('State: END')
+
+    def change_state(self, new_state):
+        ''' Tries to change the current state. 
+            If the state change is not allowed, it does nothing.
+
+            @param new_state: the new state to be set. Should be included in 
+                              I{ALL_STATES}
+            @return: None if change cannot be done or current state if succeeds
+        '''
+        if new_state == self.curr_state: # Exit if the sate is the same
+            rospy.logdebug("We are already in " + self.curr_state)           
+            return
+
+        # Check if we have a valid transition
+        if new_state not in self.transitions.get(self.curr_state):
+            rospy.logdebug("Invalid state transition. State not changed")
+            return
+
+        self.curr_state = new_state
+        self.state_pub.publish(self.curr_state)
+        rospy.logdebug("State changed to " + self.curr_state)       
+        rospy.logwarn("State changed to " + self.curr_state)
+        return self.curr_state          
+
+    def run_state(self, state):
+        ''' Changes the state and runs it.
+
+        @param state is the state to run. It must be in L{ALL_STATES} 
+        '''
+        try:
+            self.states.get(self.change_state(state), None)()
+        except:
+            pass
         
     def run_current_state(self): 
         ''' Executes the method corresponding to the current state '''
