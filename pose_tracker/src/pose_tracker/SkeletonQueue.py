@@ -8,7 +8,8 @@ import itertools as it
 import kinect.nite_skeleton_msg_utils as nsku
 
 class SkeletonQueue(object):
-    """docstring for SkeletonQueue"""
+    """Class that contains a queue of skeletons 
+       along with operations return its eleements as a pandas.DataFrame"""
     def __init__(self, joint_names, *args):
         super(SkeletonQueue, self).__init__()
         self.skeleton_queue = col.deque([]) # to store (skeletons, label)
@@ -52,8 +53,8 @@ class SkeletonQueue(object):
 
     def _pop_from_queue(self, elements):
         ''' Generator that pops n elements from skeleton_queue.
-            NOTE: this is a generator, meaning that it executes LAZYLY!
-            NOTE: It only grabs the first skeleton from the NiteSkeletonList msg
+            @note: this is a generator, meaning that it executes LAZYLY!
+            @note: It only grabs the first skeleton from the NiteSkeletonList msg
         '''
         for _ in xrange(self._calc_chunksize(elements)):
             try:
@@ -69,10 +70,9 @@ class SkeletonQueue(object):
 
     def _prepare_chunk(self, chunksize=50, **kwargs):
         ''' Yields chunksize elements from self.skeleton_queue (using popleft())
-            Arguments:
-            :chunksize=50: Num of elements to retrieve from the skeleton_queue.
-                           If chunksize < 0  or > len self.skeleton_queue,
-                           then yelds all elements of the queue
+            @param chunksize: Num of elements to retrieve from the queue.
+            @note: If chunksize < 0  or > len self.skeleton_queue,
+                then yelds all elements of the queue
         '''
         if not self.skeleton_queue:
             rospy.logdebug("The skeleton skeleton_queue is empty. Nothing to do.")
@@ -83,10 +83,20 @@ class SkeletonQueue(object):
         
     def _chunk_to_data_frame(self, chunk, columns):
         ''' Returns a pandas.DataFrame of chunksize elements.
-            Note that this method expects its input from'''
+            @note: This method expects its input from L{_prepare_chunk}
+            @param chunk: a chunk of elements obtained from L{_prepare_chunk}
+            @param columns: list containing the names of the 
+                pandas.DataFrame columns
+            @return: the elements of queue in form of a pandas.DataFrame
+            @rtype: pandas.Dataframe'''
         return pd.DataFrame(list(chunk), columns=columns)
 
     def pop_n_to_DataFrame(self, n, columns):
-        ''' Pops n elements from the queue and returns them as a pandas.DataFrame'''
+        ''' Pops n elements from the queue 
+            and returns them as a L{pandas.DataFrame}
+            @param n: number of elements to retrieve from queue
+            @param columns: list containing the names of the pandas.DataFrame columns
+            @return: n elements from the queue in form of a pandas.DataFrame
+            @rtype: pandas.DataFrame'''
         chunk = self._prepare_chunk(n)
         return self._chunk_to_data_frame(chunk, columns)
