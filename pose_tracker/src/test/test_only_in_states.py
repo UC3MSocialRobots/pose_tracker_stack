@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 PKG = 'pose_tracker'
-NNAME = 'test_PoseDatasetBuilder_call_only_in'
+NNAME = 'test_PoseDatasetBuilder_only_in_states'
 import roslib; roslib.load_manifest(PKG)
 # import rospy
 import unittest
 
 import pose_tracker.pose_dataset_builder_node as pdb
 
-class TestCallOnlyIn(unittest.TestCase):
+class TestOnlyInStates(unittest.TestCase):
     """Tests"""
     class MyClass():
         ''' Helper class '''
@@ -19,31 +19,31 @@ class TestCallOnlyIn(unittest.TestCase):
             if state in self.states:
                 self.curr_state = state
             
-        @pdb.call_only_in(pdb.STATE_INIT)
+        @pdb.only_in_states(pdb.STATE_INIT)
         def state1(self):
             # print "Doing state 1"
             return 1
         
-        @pdb.call_only_in([pdb.STATE_IDLE, pdb.STATE_PROCESSING])
+        @pdb.only_in_states([pdb.STATE_IDLE, pdb.STATE_PROCESSING])
         def state2(self):
             # print "Doing state 2"
             return 2
         
-        @pdb.call_only_in(pdb.STATE_PROCESSING)
+        @pdb.only_in_states(pdb.STATE_PROCESSING)
         def state3(self):
             # print "Doing state 3"
             return 3
 
     def __init__(self, *args):
-        super(TestCallOnlyIn, self).__init__(*args)
+        super(TestOnlyInStates, self).__init__(*args)
              
     def setUp(self):
-        self.mc = TestCallOnlyIn.MyClass()
+        self.mc = TestOnlyInStates.MyClass()
         
     def tearDown(self):
         pass
 
-    def test_call_only_in_works_if_states_are_correct(self):
+    def test_only_in_states_works_if_states_are_correct(self):
         self.mc.curr_state = pdb.STATE_INIT
         self.assertEqual(self.mc.state1(), 1, 
             "'state1()' should have been called in s1")
@@ -64,5 +64,5 @@ class TestCallOnlyIn(unittest.TestCase):
 
 if __name__ == '__main__':
     import rostest
-    rostest.rosrun(PKG, 'test_CallOnlyIn', TestCallOnlyIn)
+    rostest.rosrun(PKG, 'test_OnlyInStates', TestOnlyInStates)
 

@@ -5,9 +5,9 @@
   <!-- Params -->
   <rosparam command='load' file="$(find pose_labeler)/yaml/params.yaml"/>
 
-  <test test-name="TestCallOnlyInDecorator"
+  <test test-name="TestOnlyInStatesDecorator"
         pkg="pose_tracker"
-        type="test_call_only_in.py"
+        type="test_only_in_states.py"
         time-limit="60.0"/>
 
   <test test-name="TestPoseDatasetBuilderInit"

@@ -30,7 +30,7 @@ STATE_END = 'end'
 ALL_STATES = ( STATE_INIT, STATE_IDLE, STATE_PROCESSING, 
                STATE_FINISHING, STATE_END)
 
-def call_only_in(states):
+def only_in_states(states):
     '''Decorator method that ensures that decorated method is
        only called in the entered states.
 
@@ -38,7 +38,7 @@ def call_only_in(states):
               
        Example: 
 
-            >>> @_call_only_in([STATE_PROCESSING,])
+            >>> @only_in_states([STATE_PROCESSING,])
             ... def f1(self): 
             ...     print "f1 called!" 
             >>> builder = PoseDatasetBuilder()
@@ -197,7 +197,7 @@ class PoseDatasetBuilder():
 
         self.change_state(self.command_mapper[command.data])
     
-    @call_only_in(STATE_PROCESSING)
+    @only_in_states(STATE_PROCESSING)
     def label_callback(self, label):
         ''' Updates the label of the received data ''' 
         self.current_label = label.data
@@ -205,7 +205,7 @@ class PoseDatasetBuilder():
         if label.data != 'UNKNOWN':
             self.all_labels.add(label.data) # Update the set of used labels
 
-    @call_only_in(STATE_PROCESSING)
+    @only_in_states(STATE_PROCESSING)
     def skeleton_callback(self, skeletons):
         ''' Adds the received skeletons message to the queue 
             together with the current label in a form of:
