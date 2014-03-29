@@ -207,13 +207,18 @@ class PoseDatasetBuilder():
 
     @only_in_states(STATE_PROCESSING)
     def skeleton_callback(self, skeletons):
-        ''' Adds the received skeletons message to the queue 
+        ''' Adds the received skeletons message to the queue
             together with the current label in a form of:
             tuple (skeleton, label)
+            
             The skeleton is added if:
-            - State is processing
-            - Label is set
-            - Label != "UNKNOWN" 
+              - State is processing
+              - Label is set
+              - Label != "UNKNOWN" 
+
+            @type skeletons: kinect.msg.NiteSkeletonList
+            @param skeletons: The skeletons message to be added to the queue
+
         '''
         if self.curr_state != STATE_PROCESSING:
             return
@@ -344,9 +349,7 @@ class PoseDatasetBuilder():
 
     def run_state(self, state):
         ''' Changes the state and runs it.
-
-        @param state is the state to run. It must be in L{ALL_STATES} 
-        '''
+            @param state: is the state to run. It must be in L{ALL_STATES} '''
         try:
             self.states.get(self.change_state(state), None)()
         except:

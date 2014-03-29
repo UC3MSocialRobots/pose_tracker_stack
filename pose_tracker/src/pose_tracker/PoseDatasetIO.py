@@ -9,10 +9,11 @@ import datetime
 def parse_date(date):
     ''' An utility function to parse the date used in the dataset metadata.
         
-        @param date: The date in a form of a string
-                Allowed formats: 
-                    "YYYY-MM-DD", "YYYY-MM-DD hh:mm" and "YYYY-MM-DD hh:mm:ss" 
-                See ISO 8601 For more information. 
+        @param date: The date in a form of a string. Allowed formats follow ISO8601
+            1. I{YYYY-MM-DD}
+            2. I{YYYY-MM-DD hh:mm} 
+            3. I{YYYY-MM-DD hh:mm:ss}
+        @see: ISO 8601 for more information. 
         @return: the entered date in form of "YYYY-MM-DD hh:mm:ss"
         @raise ValueError: if entered date is malformed
         '''
