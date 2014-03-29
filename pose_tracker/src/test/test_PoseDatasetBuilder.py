@@ -187,20 +187,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                     msg="Should not added the skeleton msg to the queue "
                         "when the label is '{}'".format(il))        
 
-    # # @unittest.skip("Skpping this Test")            
-    # @patch.object(pdio, 'parse_date')
-    # @patch.object(pdio.PoseDatasetIO, 'fill_metadata')
-    # def test_state_init(self, mock_fmd, mock_pdate):
-    #     '''check file is created.
-    #        check metadata is filled'''
-    #     mock_pdate.return_value = '2013-11-14 18:45'
-    #     self.node.state_initiating()
-    #     mock_fmd.assert_called_with(**self.node.dataset_metadata)
-    #     self.assertEqual(self.node.curr_state, pdb.STATE_IDLE,
-    #                      msg="Init state should end setting state '{}'"
-    #                          .format(pdb.STATE_IDLE))
-    #     self.node.data_writer.close()
-
     
     # @unittest.skip("Skpping this Test")      
     @patch.object(pdio, 'parse_date')
@@ -210,12 +196,12 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         
         # pdio.pd.HDFstore = MagicMock()
         self.node.state_initiating()
-        self.assertEqual(self.node.data_writer.dataset, self.node.dataset_name)
+        self.assertEqual(self.node.data_writer.dataset, 
+                         self.node.dataset_name + '.h5')
         self.assertEqual(self.node.data_writer.dataset_columns, 
-            self.node.dataset_columns)
+                         self.node.dataset_columns)
 
 
-    
     # @unittest.skip("Skpping this Test")      
     @patch.object(pdb.PoseDatasetBuilder, 'create_dataset')
     def test_state_init(self, mock_create):

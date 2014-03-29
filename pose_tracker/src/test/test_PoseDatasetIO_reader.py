@@ -9,59 +9,45 @@ import pandas as pd
 import pose_tracker.PoseDatasetIO as pdio
 
 
-@patch.object(pd.io.pytables.HDFStore, 'put')
 class PoseDatasetIOReaderTestCase(unittest.TestCase):
     def __init__(self, *args):
         super(PoseDatasetIOReaderTestCase, self).__init__(*args)
     
     def setUp(self):
-        # cols = tuple('ABCDE')
-        # ind = ('fist','second', 'third','fourth')
-        # self.dataset = pd.DataFrame(np.linspace(1,20,20).reshape(4,5),
-        #                             columns=cols, index=ind)
-        # self.invalid_dataset = np.linspace(1,20,20).reshape(4,5)
+        cols = tuple('ABCDE')
+        ind = ('fist','second', 'third','fourth')
+        self.df = pd.DataFrame(np.linspace(1,20,20).reshape(4,5),
+                                    columns=cols, index=ind)
+        self.invalid_df= np.linspace(1,20,20).reshape(4,5)
 
-        # self.writer = pdio.PoseDatasetIO(dataset='/tmp/writer', columns=cols)
-        # self.writer.create_dataset()
-        pass
+        self.pose_dataset = \
+            pdio.PoseDatasetIO(dataset='/tmp/reader_dataset', columns=cols)
+        self.table_name = 'fake_table'
 
     def tearDown(self):
         pass
 
-    def _build_dataset(self):
+    @patch.object(pdio.pd, 'HDFStore')
+    def _build_dataset(self, mock_hdfs):
         ''' Helper function to create fake datasets'''
-        cols = tuple('ABCDE')
-        ind = ('fist','second', 'third','fourth')
-        self.dataset = pd.DataFrame(np.linspace(1,20,20).reshape(4,5),
-                                    columns=cols, index=ind)
-        self.invalid_dataset = np.linspace(1,20,20).reshape(4,5)
+        self.pose_dataset.create_dataset()
+        self.pose_dataset.write(self.table_name, self.df)
+        self.pose_dataset.fill_metadata()
 
-        self.ds_file = \
-            pdio.PoseDatasetIO(dataset='/tmp/reader_dataset.h5', columns=cols)
-        self.ds_file.create_dataset()
+    def test_get_metadata(self):
+        self._build_dataset()
+        self.pose_dataset.read_table(self.table_name)
+        self.pose_dataset.store.get.assert_called_with(self.table_name)
 
-    def test_read_raises_IOError_if_file_not_found():
-        pass
-
-    def test_read_raises_IOError_if_dataset_not_created():
-        pass
-    
-    def test_get_metadata_raises_IOError_if_no_metadata_has_been_entered():
-        pass
-    
-    def test_get_metadata():
-        pass
-    
-    def test_read(self, mock_put):
-        pass
+    def test_read_table(self):
+        self._build_dataset()
+        self.pose_dataset.read_table(self.table_name)
+        self.assertTrue(self.pose_dataset.store.get.called)
+        
+        
 
 if __name__ == '__main__':
-    # import rostest
-    # rostest.rosrun(PKG, 'test_PoseDatasetIO', PoseDatasetIOInitTestCase)
-       
     import rosunit
-    # rosunit.unitrun(PKG, 'test_DateParser', DateParserTestCase)
-    # rosunit.unitrun(PKG, 'test_PoseDatasetIO', PoseDatasetIOInitTestCase)
     rosunit.unitrun(PKG, 'test_PoseDatasetIOReader', PoseDatasetIOReaderTestCase,
         coverage_packages=['../PoseDatasetIO.py',])
-    # rosunit.unitrun(PKG, 'test_PoseDatasetIOReader', PoseDatasetIOReaderTestCase)
+

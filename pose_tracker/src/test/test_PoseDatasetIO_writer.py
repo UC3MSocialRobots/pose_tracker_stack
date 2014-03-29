@@ -2,7 +2,7 @@
 PKG = 'pose_tracker'
 import roslib; roslib.load_manifest(PKG)
 import unittest
-from mock import patch
+from mock import (patch, MagicMock)
 import numpy as np
 import pandas as pd
 
@@ -22,10 +22,11 @@ class PoseDatasetIOWriterTestCase(unittest.TestCase):
         self.invalid_dataset = np.linspace(1,20,20).reshape(4,5)
 
         self.writer = pdio.PoseDatasetIO(dataset='/tmp/writer', columns=cols)
+        # pdio.pd.HDFStore = MagicMock()
         self.writer.create_dataset()
-        
 
     def tearDown(self):
+        self.writer.close()
         pass
 
     def test_init_with_bad_args(self, mock_put):

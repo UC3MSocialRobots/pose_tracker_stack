@@ -8,7 +8,7 @@ import datetime
  
 def parse_date(date):
     ''' An utility function to parse the date used in the dataset metadata.
-        Atributes:
+        
         @param date: The date in a form of a string
                 Allowed formats: 
                     "YYYY-MM-DD", "YYYY-MM-DD hh:mm" and "YYYY-MM-DD hh:mm:ss" 
@@ -36,7 +36,7 @@ class PoseDatasetIO(object):
     """Class that that reads/writes data to a dataset containing poses"""
     def __init__(self, *args, **kwargs):
         ''' Inits the class.
-            Arguments:
+
             @param dataset: the name of the file where the dataset will be written
             @param dataset_columns: The name of the columns for the dataset_table
             
@@ -44,7 +44,7 @@ class PoseDatasetIO(object):
             @raise TypeError: if dataset is not string or dataset_columns is
             not an iterable.'''
 
-        self.dataset = kwargs['dataset']
+        self.dataset = kwargs['dataset'] + '.h5'
         self.dataset_columns = kwargs['columns']
         # print self.dataset
         # print str(self.dataset_columns)
@@ -60,7 +60,7 @@ class PoseDatasetIO(object):
         '''Creates de dataset file in HDF5 Format'''
         # print "CWD: " + os.getcwd()
         # print self.dataset
-        self.store = pd.HDFStore(self.dataset + '.h5')
+        self.store = pd.HDFStore(self.dataset)
       
     def close(self):
         '''Closes the dataset file'''
@@ -84,33 +84,30 @@ class PoseDatasetIO(object):
         # A dirty hack to use the pandas interface to pytables
         description = pd.Series((creator, date, user_descr), 
                                 index=('creator', 'date','descr'))
-
         self.store.put('description', description) 
 
+
     def get_metadata(self):
-        ''' Returns the metadata table from the file'''
+        ''' Returns the metadata table from the file
+
+            @see: L{fill_metadata}
+            @return: the metadata contained in the dataset file
+            @rtype: pandas:Series'''
         return self.read_table('description')
     
     def write(self, table_name, chunk, **kwargs):
         ''' Writes a chunk of data to the dataset file
-            Arguments:
             
             @param table_name: the name of the table on the file
+            @ptype chunk: pandas.DataFrame
             @param chunk: the pandas.DataFrame to be written to the file
             @keyword: other arguments to be pased to the method.
-                     @see 'pandas.io.pytables.HDFStore.put().
-                     Typically are bools "table" and "append"
-            
-            @raise TypeError: if table_name is not a string
+                Typically are bools "table" and "append"
+                @see 'pandas.io.pytables.HDFStore.put().
             @raise TypeError: if chunk is not a pandas.DataFrame
             @raise ValueError: if chunk is empty
             
             '''
-
-        # print table_name
-        if not isinstance(table_name, str):
-            raise TypeError("Table name must be a string")
-        
         if not isinstance(chunk, pd.DataFrame):
             raise TypeError("chunk is not a pandas.DataFrame. Could not write")
 
@@ -121,11 +118,11 @@ class PoseDatasetIO(object):
         self.store.put(table_name, chunk, **kwargs)
         
         
-    def read_table(self, table_name, **kwargs):
+    def read_table(self, table_name):
         ''' Reads the file and returns a dataframe stored in table table_name
-        @type  table: string
-        @param table: The table where to read
+        
+        @type table_name: string
+        @param table_name: The table where to read
         @return: a pandas dataframe obtained from table table_name
         @rtype: pandas.DataFrame'''
-
-        return pd.read_hdf(self.dataset + '.h5', table_name)
+        return self.store.get(table_name)
