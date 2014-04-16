@@ -34,6 +34,15 @@ def parse_date(date):
                      " See ISO 8601 For more information.".format(date))
 
 
+def filename_with_extension(name, extension):
+    ''' Ensures filename ends with extension.
+
+        @return: name if name ends with extension
+        @return: name + etension if name does not end with extension
+    '''
+    return name if name.endswith(extension) else name + extension
+
+
 class PoseDatasetIO(object):
     """Class that that reads/writes data to a dataset containing poses"""
     def __init__(self, *args, **kwargs):
@@ -41,13 +50,23 @@ class PoseDatasetIO(object):
 
             @param dataset: name of the file where the dataset will be written
             @param dataset_columns: name of the columns for the dataset_table
+            @keyword mode: {'a', 'w', 'r', 'r+'}, default 'a'
+                - ``'r'`` Read-only; no data can be modified.
+                - ``'w'`` Write; a new file is created
+                          (an existing file with the same name would be deleted)
+                - ``'a'`` Append; an existing file is opened for reading
+                          and writing. If the file does not exist it is created.
+                - ``'r+'`` Similar to ``'a'``, but the file must already exist.
 
             @raise KeyError: if some argument is missing
             @raise TypeError: if dataset is not string or dataset_columns is
             not an iterable.'''
 
-        self.dataset = kwargs['dataset'] + '.h5'
+        #self.dataset = kwargs['dataset'] + '.h5'
+        self.dataset = filename_with_extension(kwargs['dataset'], '.h5')
         self.dataset_columns = kwargs['columns']
+        self._mode = kwargs.get('mode', 'a')
+
         # print self.dataset
         # print str(self.dataset_columns)
 
@@ -56,13 +75,35 @@ class PoseDatasetIO(object):
         if not hasattr(self.dataset_columns, '__iter__'):
             raise TypeError("dataset columns must be iterable!")
 
+    def __enter__(self):
+        ''' @todo allow open dataset passing it arguments'''
+        self.open_dataset(mode=self._mode)
+        return self
         # self.create_dataset(self.dataset)
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+        return
 
     def create_dataset(self):
         '''Creates de dataset file in HDF5 Format'''
-        # print "CWD: " + os.getcwd()
-        # print self.dataset
-        self.store = pd.HDFStore(self.dataset)
+        self.open_dataset()
+
+    def open_dataset(self, **kwargs):
+        ''' Opens the dataset file using the pandas.HDFStore API.
+            @see: pandas.HDFStore
+            @note: All keywords are passed to the pandas.HDFStore API
+            @type path: string
+            @keyword path: File path to HDF5 file
+            @keyword mode: {'a', 'w', 'r', 'r+'}, default 'a'
+                - ``'r'`` Read-only; no data can be modified.
+                - ``'w'`` Write; a new file is created
+                          (an existing file with the same name would be deleted)
+                - ``'a'`` Append; an existing file is opened for reading
+                          and writing. If the file does not exist it is created.
+                - ``'r+'`` Similar to ``'a'``, but the file must already exist.
+        '''
+        self.store = pd.HDFStore(self.dataset, **kwargs)
 
     def close(self):
         '''Closes the dataset file'''
@@ -126,3 +167,18 @@ class PoseDatasetIO(object):
         @return: a pandas dataframe obtained from table table_name
         @rtype: pandas.DataFrame'''
         return self.store.get(table_name)
+
+    def read_group(self, group_name):
+        ''' Reads the file and returns a dictionary with all tables belonging to
+            a group
+
+            @type table_name: string
+            @param table_name: The table where to read
+            @return: a dict whose keys refer to dataframes obtained from table table_name
+            @rtype: dict wich values are pandas.DataFrames'''
+        #return pd.concat([self.store.select(node._v_pathname)
+        #                  for node in self.store.get_node(group_name)])
+
+        return {node._v_name: self.store.select(node._v_pathname) 
+                for node in self.store.get_node(group_name)}
+
