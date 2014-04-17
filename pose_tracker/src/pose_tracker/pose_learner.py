@@ -49,12 +49,24 @@ def numerize_y(y):
     labels = sorted(set(y))
     return np.array(map(labels.index, y))
 
+def df_to_Xy(dataframe):
+    ''' Converts a dataframe to scikitlearn's compatible X and y
+        @param dataframe: DataFrame to be converted to scikit-learn X,y format
+        @type dataframe: pandas.DataFrame
+        @return: a tuple (X, y)
+    '''
+    y = zip(*dataset.index)[1]
+    y_num = numerize_y(y)
+    return (dataframe.values, y_num)
 
-def train_clf(dataset, **kwargs):
+
+def train_clf(X, y, **kwargs):
     '''
         Trains a classifier with the entered data
-        @param dataset: 
-        @type dataset:
+        @param X: 
+        @type X:
+        @param y: 
+        @type y:
         @keyword model:
         @type model:
         @keyword param_grid: Dictionary of parameters to 
@@ -66,10 +78,6 @@ def train_clf(dataset, **kwargs):
                         ensemble.RandomForestClassifier(oob_score=True))
     param_grid = kwargs['param_grid']
 
-    X = dataset.values
-    y = zip(*dataset.index)[1]
-    y_num = numerize_y(y)
-    
     classif = GridSearchCV(model, param_grid, cv=3, score_func=sklm.f1_score)
-    classif.fit(X, y_num)
+    classif.fit(X, y)
     return classif
