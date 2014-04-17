@@ -55,7 +55,7 @@ def df_to_Xy(dataframe):
         @type dataframe: pandas.DataFrame
         @return: a tuple (X, y)
     '''
-    y = zip(*dataset.index)[1]
+    y = zip(*dataframe.index)[1]
     y_num = numerize_y(y)
     return (dataframe.values, y_num)
 
