@@ -60,7 +60,8 @@ def df_to_Xy(dataframe):
     return (dataframe.values, y_num)
 
 
-def train_clf(X, y, **kwargs):
+
+def train_clf(X, y, param_grid, **kwargs):
     '''
         Trains a classifier with the entered data
         @param X: 
@@ -69,15 +70,41 @@ def train_clf(X, y, **kwargs):
         @type y:
         @keyword model:
         @type model:
-        @keyword param_grid: Dictionary of parameters to 
+        @keyword param_grid: hyperparameters of the model that are going to be searched
         @type param_grid: dict
 
         @return: the classifier already fitted to the entered data
     '''
     model = kwargs.get('predictor', 
                         ensemble.RandomForestClassifier(oob_score=True))
-    param_grid = kwargs['param_grid']
-
-    classif = GridSearchCV(model, param_grid, cv=3, score_func=sklm.f1_score)
+    
+    classif = GridSearchCV(model, param_grid, cv=5, scoring=sklm.f1_score)
     classif.fit(X, y)
     return classif
+
+def load_class_from_name(full_name):
+    '''
+        Returns an instance of a Python class from its qualified full name.
+
+        Adapted from this SO Answer: http://stackoverflow.com/a/547867/630598
+        @type full_name: string
+        @param full_name: Class full name: foo.bar.klass
+        @return: an instance of foo.bar.Klass. It has to be called just
+        
+        Example:
+        --------
+        
+        >>> Class Klass:
+        >>>     __init__():
+        >>>         print('klass instantiated')
+
+        >>> my_class = load_class_from_name('foo.bar.Klass')
+        >>> my_class()
+
+        ... 'klass instantiated'
+
+    '''
+    module_name, klass_name = full_name.rsplit('.', 1)
+    mod = __import__(module_name, fromlist=[klass_name])
+    klass = getattr(mod, klass_name)
+    return klass
