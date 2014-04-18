@@ -61,7 +61,7 @@ def df_to_Xy(dataframe):
     return (dataframe.values, y_num)
 
 
-def train_clf(X, y, param_grid, **kwargs):
+def fit_clf(X, y, param_grid, **kwargs):
     '''
         Trains a classifier with the entered data
         @param X: 
