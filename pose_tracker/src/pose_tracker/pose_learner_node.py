@@ -8,7 +8,8 @@ import param_utils as pu
 import pose_learner as pl
 
 DEFAULT_NAME = 'pose_learner'
-PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid')
+PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid', 
+          'out_file')
 
 class PoseLearnerNode():
     ''' Class that builds
@@ -17,13 +18,15 @@ class PoseLearnerNode():
     '''
     def __init__(self, **kwargs):
         self.node_name = kwargs.get('node_name', DEFAULT_NAME)
+        rospy.init_node(self.node_name)
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initializing " + self.node_name + " node...")
+        
         self.load_parameters()
         # self.load_dataset(self.dataset)
         self.classif = pl.load_class_from_name(self.algorithm)
         
-        rospy.Subscriber("learn_this", String, self._learn_dataset_cb)
+        rospy.Subscriber("~learn_this", String, self._learn_dataset_cb)
         self.ready_pub = rospy.Publisher('~classifier_ready', String)
 
     def load_parameters(self):

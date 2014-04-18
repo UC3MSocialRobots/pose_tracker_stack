@@ -2,17 +2,39 @@
 
 from __future__ import (print_function, division)
 
+import itertools as it
 from functools import partial
 import numpy as np
 import pandas as pd
 
 # import PoseDatasetIO as pdio
 from PoseDatasetIO import PoseDatasetIO
-import user_data_loader as udl
+#import user_data_loader as udl
+
+header = tuple(['h_seqNum', 'h_stamp', 'user_id'])
+joints = tuple(['head', 'neck', 'torso',
+                'left_shoulder', 'left_elbow', 'left_hand',
+                'right_shoulder', 'right_elbow', 'right_hand',
+                'left_hip', 'left_knee', 'left_foot',
+                'right_hip', 'right_knee', 'right_foot'])
+attribs = tuple(['confidence', 'pos_x', 'pos_y', 'pos_z',
+                 'orient_x', 'orient_y', 'orient_z', 'orient_w'])
+
+index = list(it.chain(header,
+                      it.imap('_'.join, it.product(joints, attribs)),
+                      ['pose', ]))
+
+positions = [i for i in index if '_pos_' in i]
+orientations = [i for i in index if '_orient_' in i]
+confidences = [i for i in index if '_confidence' in i]
+pose = index[-1]
 
 
 DEFAULT_NAME = 'pose_learner'
-COLS_TO_CLEAN=udl.confidences   
+COLS_TO_CLEAN=confidences   
+
+
+
 
 def _clean_prefix(text, prefix): 
     return text.lstrip(prefix)
@@ -25,7 +47,7 @@ def prepare_dataset(filename, group_name):
         group 'group_name' in form of a unified dataset
         prior to returning it, the dataset is grouped by pose, to 
     '''
-    with PoseDatasetIO(dataset=filename, columns=udl.index, mode='r') as dataset:
+    with PoseDatasetIO(dataset=filename, columns=index, mode='r') as dataset:
         dataset = {node._v_name: dataset.store.select(node._v_pathname). \
                                               groupby('pose').mean(). \
                                               rename(_rm_stand_pref)
