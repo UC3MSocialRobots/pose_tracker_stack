@@ -49,6 +49,7 @@ def numerize_y(y):
     labels = sorted(set(y))
     return np.array(map(labels.index, y))
 
+
 def df_to_Xy(dataframe):
     ''' Converts a dataframe to scikitlearn's compatible X and y
         @param dataframe: DataFrame to be converted to scikit-learn X,y format
@@ -58,7 +59,6 @@ def df_to_Xy(dataframe):
     y = zip(*dataframe.index)[1]
     y_num = numerize_y(y)
     return (dataframe.values, y_num)
-
 
 
 def train_clf(X, y, param_grid, **kwargs):
@@ -82,6 +82,25 @@ def train_clf(X, y, param_grid, **kwargs):
     classif.fit(X, y)
     return classif
 
+def save_clf(classifier, filename):
+    ''' Saves a classifier to a file
+        @param classifier: the classifier
+        @param filename: the path where to save the classifier
+    '''
+    from sklearn.externals import joblib
+    joblib.dump(classifier, filename, compress=9)
+
+
+def load_clf(filename):
+    '''Loads a classifier from a file
+       @param filename: file path where to load the classifier
+       @return: the loaded classifier. 
+    '''
+    from sklearn.externals import joblib
+    loaded_model = joblib.load(filename)
+    return loaded_model
+
+
 def load_class_from_name(full_name):
     '''
         Returns an instance of a Python class from its qualified full name.
@@ -93,7 +112,7 @@ def load_class_from_name(full_name):
         
         Example:
         --------
-        
+        >>> # Assume we already are in module foo.bar
         >>> Class Klass:
         >>>     __init__():
         >>>         print('klass instantiated')
