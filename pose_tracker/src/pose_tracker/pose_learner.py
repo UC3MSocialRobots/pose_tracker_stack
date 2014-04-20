@@ -7,7 +7,9 @@ from functools import partial
 import numpy as np
 import pandas as pd
 
-# import PoseDatasetIO as pdio
+from sklearn.grid_search import GridSearchCV
+from sklearn.metrics import f1_score
+
 from PoseDatasetIO import PoseDatasetIO
 #import user_data_loader as udl
 
@@ -32,8 +34,6 @@ pose = index[-1]
 
 DEFAULT_NAME = 'pose_learner'
 COLS_TO_CLEAN=confidences   
-
-
 
 
 def _clean_prefix(text, prefix): 
@@ -83,26 +83,33 @@ def df_to_Xy(dataframe):
     return (dataframe.values, y_num)
 
 
-def fit_clf(X, y, param_grid, **kwargs):
+def fit_clf(X, y, **kwargs):
     '''
         Trains a classifier with the entered data
-        @param X: 
-        @type X:
-        @param y: 
-        @type y:
-        @keyword model:
-        @type model:
-        @keyword param_grid: hyperparameters of the model that are going to be searched
+        @param X: numpy.array of shape (m,n)
+        @type X: Dataset
+        @param y: Labels of the dataset
+        @type y: numpy array of shape (m,)
+        @keyword estimator: the full name of the algorithm to fit the dataset 
+                            Should be any scikit-learn supervised algorithm 
+                            that implements the fit() method.
+                            E.g. 'sklearn.ensemble.RandomForestClassifier'
+        @type estimator: string 
+        @keyword param_grid: hyperparameters of the model to be optimized
         @type param_grid: dict
-
-        @return: the classifier already fitted to the entered data
+        @return: the classifier already fitted to the input data
     '''
-    model = kwargs.get('predictor', 
-                        ensemble.RandomForestClassifier(oob_score=True))
-    
-    classif = GridSearchCV(model, param_grid, cv=5, scoring=sklm.f1_score)
-    classif.fit(X, y)
-    return classif
+    estimator = kwargs.get('estimator', __get_default_classifier())
+    if kwargs['param_grid']:
+        estimator = GridSearchCV(estimator, 
+                                 kwargs['param_grid'], cv=3, score_func=f1_score)
+    estimator.fit(X, y)
+    return estimator
+
+def __get_default_classifier():
+    ''' Helper function that returns a default classifier'''
+    clf = load_class_from_name('sklearn.ensemble.RandomForestClassifier')
+    return clf(oob_score=True)
 
 def save_clf(classifier, filename):
     ''' Saves a classifier to a file
