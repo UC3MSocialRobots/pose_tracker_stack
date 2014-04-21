@@ -49,7 +49,7 @@ class PoseDatasetIO(object):
         ''' Inits the class.
 
             @param dataset: name of the file where the dataset will be written
-            @param dataset_columns: name of the columns for the dataset_table
+            @param columns: name of the columns for the dataset_table
             @keyword mode: {'a', 'w', 'r', 'r+'}, default 'a'
                 - ``'r'`` Read-only; no data can be modified.
                 - ``'w'`` Write; a new file is created
@@ -59,7 +59,7 @@ class PoseDatasetIO(object):
                 - ``'r+'`` Similar to ``'a'``, but the file must already exist.
 
             @raise KeyError: if some argument is missing
-            @raise TypeError: if dataset is not string or dataset_columns is
+            @raise TypeError: if dataset is not string or columns is
             not an iterable.'''
 
         #self.dataset = kwargs['dataset'] + '.h5'
