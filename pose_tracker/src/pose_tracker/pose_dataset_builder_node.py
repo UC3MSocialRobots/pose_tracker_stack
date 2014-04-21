@@ -10,7 +10,6 @@ import datetime
 import pandas as pd
 import itertools as it
 from functools import wraps
-# import os
 
 import param_utils as pu
 import PoseDatasetIO as pdio
@@ -116,7 +115,9 @@ class PoseDatasetBuilder():
             
         self.dataset_columns.insert(0, 'time_stamp')
         self.dataset_columns.insert(0, 'user_id')
-        self.dataset_columns.append('label')
+        self.dataset_columns.append('pose')
+
+        rospy.set_param('~dataset/columns', self.dataset_columns)
 
         # Stores (skeletons, label) pairs and manages queue IO
         self.skeleton_queue = skq.SkeletonQueue(self.joint_names) 
