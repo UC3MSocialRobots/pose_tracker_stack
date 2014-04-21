@@ -9,7 +9,7 @@ import pose_learner as pl
 
 DEFAULT_NAME = 'pose_learner'
 PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid', 
-          'out_file')
+          'out_file', 'drop_columns')
 
 class PoseLearnerNode():
     ''' Class that builds
@@ -22,15 +22,19 @@ class PoseLearnerNode():
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initializing " + self.node_name + " node...")
         
-        self.load_parameters()
-
-        self.classif = pl.load_class_from_name(self.algorithm)()
-        rospy.loginfo("Classifier loaded: {}".format(self.classif))
+        try:
+            self.load_parameters()
+    
+            self.classif = pl.load_class_from_name(self.algorithm)()
+            rospy.loginfo("Classifier loaded: {}".format(self.classif))
         
+            self.load_dataset(self.dataset_file, self.table_name).fit().save_clf()        
+        except Exception, e:
+            rospy.logfatal("Couldn't init the node. Reason: {}".format(e))
+            self.shutdown()
+
         rospy.Subscriber("~learn_this", String, self._learn_dataset_cb)
         self.ready_pub = rospy.Publisher('~classifier_ready', String)
-
-        self.load_dataset(self.dataset_file, self.table_name).fit().save_clf()        
 
     def load_parameters(self):
         ''' Loads the parameters needed by the node.
@@ -43,8 +47,8 @@ class PoseLearnerNode():
                 pname = p.name.rsplit('/', 1)[-1]  # Get rid of param namespace
                 setattr(self, pname, p.value)
         except:
-            rospy.logfatal("Couldn't load Parameters: {}".format(list(params)))
-            self.shutdown()
+            rospy.logerror("Couldn't load Parameters: {}".format(list(params)))
+            raise
 
     def _learn_dataset_cb(self, dataset_file):
         try:
@@ -56,7 +60,7 @@ class PoseLearnerNode():
     def load_dataset(self, filename, table_name):
         try:
             self.dataset = pl.prepare_dataset(filename, table_name) \
-                         .drop(pl.COLS_TO_CLEAN, axis=1)
+                         .drop(self.drop_columns, axis=1)
             return self
         except IOError:
             rospy.logerror("Couldn't load dataset {}".format(filename))
