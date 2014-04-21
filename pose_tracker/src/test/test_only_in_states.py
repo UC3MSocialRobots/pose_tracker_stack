@@ -63,6 +63,8 @@ class TestOnlyInStates(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    import rostest
-    rostest.rosrun(PKG, 'test_OnlyInStates', TestOnlyInStates)
+    # import rostest
+    # rostest.rosrun(PKG, 'test_OnlyInStates', TestOnlyInStates)
+    import rosunit
+    rosunit.unitrun(PKG, 'test_OnlyInStates', TestOnlyInStates)
 
