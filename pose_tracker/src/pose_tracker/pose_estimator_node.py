@@ -4,11 +4,15 @@ import roslib; roslib.load_manifest('pose_tracker')
 import rospy
 from std_msgs.msg import String
 
+from pandas import Series
+
 import param_utils as pu
 import pose_learner as pl
 
+import kinect.nite_skeleton_msg_utils as nsku
+
 DEFAULT_NAME = 'pose_estimator'
-PARAMS = ('estimator_file', )
+PARAMS = ('estimator_file', 'dataset_columns', 'drop_columns' )
 
 class PoseEstimatorNode():
     ''' Class that builds the node
@@ -49,12 +53,20 @@ class PoseEstimatorNode():
         self.estimator = pl.load_clf(filename)
         return self.estimator
 
-    def predict(self):
+    def predict(self, instance):
         ''' 
             Predicts the output for an instance
             @TODO: fill this method
         '''
-        pass
+        return self.estimator.predict(instance)
+
+    def predict_proba(self, instance):
+        return self.estimator.predict_proba(instance)
+
+    def _unpack_skeleton_msg(self, skel_msg):
+        ''' Converts a NiteskeletonMsg to a list to a pandas.Series'''
+        return Series(list(nsku.unpack_skeleton_msg(skel_msg)[1]), 
+                      index=self.dataset_columns).drop(self.drop_columns,axis=1)
 
     def run(self):
         ''' Runs the node until shutdowns'''
