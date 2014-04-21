@@ -1,0 +1,21 @@
+###################################################################
+### WARNING: Do no modify the params of this file! ###
+###################################################################
+out_file: '/tmp/trained_clf.pkl'
+dataset_file: '/tmp/data_experiments_01-02-03.h5'
+table_name: 'exp03'
+# Dataset Columns that won't be used to fit the data
+drop_columns: ['h_seqNum', 'h_stamp', 'user_id',
+                'head_confidence', 'neck_confidence', 'torso_confidence',
+                'left_shoulder_confidence', 'left_elbow_confidence', '
+                left_hand_confidence', 'right_shoulder_confidence',
+                'right_elbow_confidence', 'right_hand_confidence',
+                'left_hip_confidence', 'left_knee_confidence',
+                'left_foot_confidence', 'right_hip_confidence',
+                'right_knee_confidence', 'right_foot_confidence']
+algorithm: 'sklearn.ensemble.RandomForestClassifier'
+parameter_grid: {'n_estimators': [3, 5, 7, 10, 15, 20],
+                  'min_samples_leaf': [1, 3, 5],
+                  'max_depth': [4, 5, 6, 7],
+                  'max_features': [10, 20, 50, 100]
+                }

@@ -1,0 +1,15 @@
+<launch>
+<arg name="robot"/>
+<arg name="params" 
+     default="$(find pose_tracker)/params/pose_learner_params.yaml" />
+
+<group ns="$(arg robot)">
+  <!-- Params -->
+  <node name="pose_learner" 
+        pkg="pose_tracker" type="pose_learner_node.py" 
+        required="true" output="screen">
+        <rosparam command='load' file="$(arg params)"/>
+  </node>
+
+</group>
+</launch>
