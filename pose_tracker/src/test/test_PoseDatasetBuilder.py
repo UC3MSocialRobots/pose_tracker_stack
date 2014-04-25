@@ -24,12 +24,14 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         # Override default file for dataset creation. Put it in /tmp
         rospy.set_param('/dataset/filename', '/tmp/test_dataset')
         self.node = pdb.PoseDatasetBuilder()
+
+        rospy.logwarn('PARAM_LIST: {}'.format(list(pu.get_parameters(pdb.PARAM_NAMES))))
         
     def tearDown(self):
-        self.node.state_srv.shutdown('TearDown: shutting down the service')
+        #self.node.state_srv.shutdown('TearDown: shutting down the service')
         self.node.shutdown()
     
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     @patch.object(pu, 'get_parameters')
     def test_check_parameters_loaded(self, mock_putils):
         self.node.state_srv.shutdown('Manually shutting down the service')
@@ -67,7 +69,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         node.state_srv.shutdown('Manually shutting down the service ')
         node.shutdown()
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     def test_state_transitions(self):
         # Helper func to convert an object to an iterable (unless already it is one)
         as_iter = lambda i: i if hasattr(i, '__iter__') else (i,)
@@ -116,7 +118,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                 msg="Invalid Command '{}' should not have changed the state"
                     .format(ic))        
 
-   # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     def test_label_and_skeleton_cb_do_nothing_if_not_in_state_processing(self):
         skeletons_msg = kin.NiteSkeletonList()
         skeletons_msg.skeletons = [1,2,3,4,5]
@@ -137,7 +139,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                 msg="Should not added a skeleton to the queue in state '{}'"
                     .format(i))
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     def test_label_callback(self):
         l1, l2, l3 = 'label1', 'label2', 'label3'
         unknown_label = 'UNKNOWN'
@@ -155,7 +157,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
             msg="Label {} should NOT have been added to all_labels set: {}"
                 .format(unknown_label, self.node.all_labels))
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     def test_skeleton_callback(self):
         self.node.curr_state = pdb.STATE_PROCESSING
         skeletons_msg = kin.NiteSkeletonList()
@@ -165,7 +167,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.assertEqual(1, len(self.node.skeleton_queue),
                 msg="Should have added the skeleton msg to the queue ") 
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     def test_skeleton_callback_does_nothing_with_invalid_skel_msg(self):
         self.node.curr_state = pdb.STATE_PROCESSING
         empty_skel_msg = kin.NiteSkeletonList()
@@ -174,7 +176,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                 msg="Should not added an empty skeleton msg to the queue")
 
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     def test_skeleton_callback_does_nothing_with_invalid_labels(self):
         skeletons_msg = kin.NiteSkeletonList()
         skeletons_msg.skeletons = [1,2,3,4,5]
@@ -188,7 +190,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                         "when the label is '{}'".format(il))        
 
     
-    # @unittest.skip("Skpping this Test")      
+    # unittest.skip("Skpping this Test")      
     @patch.object(pdio, 'parse_date')
     def test_create_dataset(self, mock_pdate):
         '''@Todo: Test create_dataset() is called and metadata passed'''
@@ -202,14 +204,14 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                          self.node.dataset_columns)
 
 
-    # @unittest.skip("Skpping this Test")      
+    # unittest.skip("Skpping this Test")      
     @patch.object(pdb.PoseDatasetBuilder, 'create_dataset')
     def test_state_init(self, mock_create):
         self.node.state_initiating()
         mock_create.assert_called()
         self.assertEqual(pdb.STATE_IDLE, self.node.curr_state)
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     @patch.object(pdb.PoseDatasetBuilder, '_do_processing')
     def test_state_processing_does_nothing_if_no_labels(
         self, mock_processing): # mock_todf, mock_write):
@@ -221,7 +223,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.assertFalse(mock_processing.called)
         
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     # @patch.object(pdio.PoseDatasetIO, 'write')
     # @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
     @patch.object(pdb.PoseDatasetBuilder, '_do_processing')
@@ -233,13 +235,14 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.node.state_processing()
         self.assertFalse(mock_processing.called)
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     @patch.object(pdio.PoseDatasetIO, 'write')
     @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
     def test_state_processing(self, mock_todf, mock_write):
-        self.node.all_labels = set(['label1', 'label2', 'label3'])
-        [self.node.skeleton_queue.append(skel,None) 
-            for skel in ['s1', 's2', 's3']]
+        # self.node.all_labels = set(['label1', 'label2', 'label3'])
+        # for skel in ['s1', 's2', 's3']:
+        #     self.node.skeleton_queue.append(skel,None) 
+        self.node._check_state_processing_preconditions = MagicMock()
         self.node.data_writer = MagicMock()
         # self.node.state_initiating() # Fist we should init the dataset
         self.node.state_processing()
@@ -247,7 +250,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.assertTrue(self.node.append_data,
             msg="After first write, append_data should be true")
 
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO', autospec=True)
     @patch('pose_tracker.SkeletonQueue.SkeletonQueue', autospec=True)
     def test_state_finishing_writes_remaining_data_from_skel_queue(self, 
@@ -269,7 +272,7 @@ class TestPoseDatasetBuilder(unittest.TestCase):
 
 
         
-    # @unittest.skip("Skpping this Test")
+    # unittest.skip("Skpping this Test")
     @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO')
     @patch.object(pdb.PoseDatasetBuilder, '_write_labels_to_file')
     @patch.object(skq.SkeletonQueue, '_prepare_chunk')
@@ -291,14 +294,14 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.assertIn(call_write, mock_label_write.mock_calls)
        
 
-    #@unittest.skip("Skpping this Test")    
+    # unittest.skip("Skpping this Test")
     def test_state_finishing_changes_state_to_end(self):
         self.node.curr_state = pdb.STATE_FINISHING
         self.node.state_finishing()
         self.assertEqual(self.node.curr_state, pdb.STATE_END,
             msg="State finishing should finish changing to state END")    
 
-    # # @unittest.skip("Skpping this Test")
+    # @unittest.skip("Skpping this Test")
     # @patch('rospy.Rate')
     # @patch.object(rospy, 'is_shutdown')
     # @patch.object(pdb.PoseDatasetBuilder, 'run_current_state')

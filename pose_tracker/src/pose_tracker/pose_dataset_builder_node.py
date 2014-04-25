@@ -8,8 +8,9 @@ import kinect.msg as kin
 
 import datetime
 import pandas as pd
-import itertools as it
+from itertools import product
 from functools import wraps
+from contextlib import contextmanager
 
 import param_utils as pu
 import PoseDatasetIO as pdio
@@ -28,6 +29,31 @@ STATE_FINISHING = 'finishing'
 STATE_END = 'end'
 ALL_STATES = ( STATE_INIT, STATE_IDLE, STATE_PROCESSING, 
                STATE_FINISHING, STATE_END)
+
+class PreconditionError(Exception):
+    ''' Exception that shuold be raised when the preconditions of a function 
+        are not met '''
+    pass
+
+@contextmanager
+def error_handler(logger=rospy.loginfo,  log_msg='',
+                  action=lambda:None, action_args=[], action_kwargs={}):
+    ''' Context Manager that logs errors and takes action
+        @param logger: logging function. Default: rospy.loginfo
+        @type logger: callable
+        @param log_msg: message to add to the logger in case of fail 
+                        (It will be preced to the exception message)
+        @type log_msg: str
+        @param action: function to perform if an exception occurs. Default: None
+        @type action: callable
+        @param action_args: argument list to pass to action. Default:[]
+        @param action_kwargs: argument keywords to pass to action. Default: {}'''
+    try:
+        yield
+    except Exception, e:
+        logger(''.join([log_msg, e.message]))
+        if action:
+            action(*action_args, **action_kwargs)
 
 def only_in_states(states):
     '''Decorator method that ensures that decorated method is
@@ -106,97 +132,95 @@ class PoseDatasetBuilder():
         # Services
         self.state_srv = rospy.Service('~state', State, self.handle_state_srv)
 
-        # Parameter Loading
-        self.load_parameters()
+        # Parameter Loading. Shutdown node if failure occurs.
+        with error_handler(logger=rospy.logfatal, action=self.shutdown):
+            self.load_parameters()
         
         # Combine joint names with joint attributes 
         # to create the dataset's attribute names (columns)
-        self.dataset_columns = self._make_dataset_columns()
+        self.dataset_columns = self._combine_joints_attribs(self.joint_names, 
+                                                          self.attrib_names)
             
         self.dataset_columns.insert(0, 'time_stamp')
         self.dataset_columns.insert(0, 'user_id')
         self.dataset_columns.append('pose')
 
-        rospy.set_param('~dataset/columns', self.dataset_columns)
+        self.dataset_config['columns'] = self.dataset_columns
+        rospy.set_param('~dataset', self.dataset_config)
+        #   rospy.set_param('~dataset/columns', self.dataset_columns)
 
         # Stores (skeletons, label) pairs and manages queue IO
         self.skeleton_queue = skq.SkeletonQueue(self.joint_names) 
 
-        # # Init State Machine
-        # self.state_machine()
-        # rospy.spin()
-
-    def _make_dataset_columns(self):
+    def _combine_joints_attribs(self, joint_names, attrib_names):
         ''' Helper method that returs a list with dataset columns.
         @note:: PoseDatasetBuilder.joint_names and PoseDatasetBuilder.attrib_names 
                 must be declared prior to call this method '''
-        return map('_'.join, it.product(self.joint_names, self.attrib_names))
+        return map('_'.join, product(joint_names, attrib_names))
 
     def load_parameters(self):
         ''' Loads all the parameters from the ros master'''
         all_params = pu.get_parameters(PARAM_NAMES)
+        logger = rospy.logwarn
+
         try:
-            index = 0
-            dataset_config = all_params.next().value
-            self.dataset_name = dataset_config['filename']
-            rospy.loginfo("Using dataset: " + str(self.dataset_name))
+            self.dataset_config = all_params.next().value
+            self.dataset_name = self.dataset_config['filename']
+            logger("Using dataset: " + str(self.dataset_name))
 
-            self.dataset_metadata = dataset_config['metadata']
-            rospy.loginfo("Dataset metadata" + str(self.dataset_metadata))
+            self.dataset_metadata = self.dataset_config['metadata']
+            logger("Dataset metadata" + str(self.dataset_metadata))
 
-            self.table_name = dataset_config['table_name']
-            rospy.loginfo("Dataset data table: " + str(self.table_name))
+            self.table_name = self.dataset_config['table_name']
+            logger("Dataset data table: " + str(self.table_name))
 
-            self.append_data = dataset_config['append_to_table']
-            rospy.loginfo("Append to table: " + str(self.append_data))
+            self.append_data = self.dataset_config['append_to_table']
+            logger("Append to table: " + str(self.append_data))
             
-            index += 1
             self.rate_param = all_params.next().value
             self.rate = rospy.Rate(self.rate_param) 
-            rospy.loginfo("Processing data at %dHz", self.rate_param)
+            logger("Processing data at %dHz", self.rate_param)
             
-            index += 1
             self.pose_labels = all_params.next().value
-            rospy.loginfo("Pose labels: " + str(self.pose_labels))
+            logger("Pose labels: " + str(self.pose_labels))
             
-            index += 1
             self.pose_commands = all_params.next().value
-            rospy.loginfo("Pose commands: " + str(self.pose_commands))
+            logger("Pose commands: " + str(self.pose_commands))
             
-            index += 1
             self.command_mapper = all_params.next().value
-            rospy.loginfo("Command mapper: " + str(self.command_mapper))
+            logger("Command mapper: " + str(self.command_mapper))
 
-            index += 1
             self.joint_names = all_params.next().value
-            rospy.loginfo("Joint names: " + str(self.joint_names))
+            logger("Joint names: " + str(self.joint_names))
             
-            index += 1
             self.attrib_names = all_params.next().value
-            rospy.loginfo("Attrib names" + str(self.attrib_names))
+            logger("Attrib names" + str(self.attrib_names))
 
-        except KeyError:
-            rospy.logfatal("Error when loading parameter '{}'".
-                format(PARAM_NAMES[index]))
+        except Exception, e:
+            rospy.logfatal(e.message + " Error when loading parameters: {}".
+                format(list(all_params)))
             rospy.signal_shutdown("node " + rospy.get_name() + \
                 " shot down because parameters were not found")
 
     # --- Topic callbacks ---
+
+    def _check_command_preconditions(self, command):
+        if self.curr_state == STATE_END:
+            raise PreconditionError("Already in State:END. \
+                                     Too late to change the state")
+        if command.data not in self.command_mapper:
+            raise PreconditionError(
+                "State could not be changed since command '" \
+                + str(command.data) + "' does not map to any state")
+
     def command_callback(self, command):
         ''' Processes the received command and sets the current state 
             according to this command.
             See self.command_mapper dict to know the command->state mappings
         '''
-        if self.curr_state == STATE_END:
-            rospy.loginfo("Already in State:END. Too late to change the state")
-            return
-
-        if command.data not in self.command_mapper:
-            rospy.logwarn("State could not be changed since command '" \
-                            + str(command.data) + "' does not map to any state")
-            return
-
-        self.change_state(self.command_mapper[command.data])
+        with error_handler(logger=rospy.loginfo):
+            self._check_command_preconditions(command)
+            self.change_state(self.command_mapper[command.data])
     
     @only_in_states(STATE_PROCESSING)
     def label_callback(self, label):
@@ -205,6 +229,17 @@ class PoseDatasetBuilder():
         rospy.loginfo("Received label:" + self.current_label)
         if label.data != 'UNKNOWN':
             self.all_labels.add(label.data) # Update the set of used labels
+
+    def _skeleton_cb_preconditions(self, skeletons):
+        if self.curr_state != STATE_PROCESSING:
+            raise PreconditionError("Current state is not {}".format(STATE_PROCESSING))
+        if not skeletons.skeletons:      # Skeleton list is empty
+            raise PreconditionError("No user found. Skeleton list is empty.")
+        if not self.current_label:
+            raise PreconditionError("Label is no set. Skeleton msg discarded.")
+        if self.current_label == 'UNKNOWN':
+            raise PreconditionError('UKNOWN label. Skeleton msg discarded.')
+            
 
     @only_in_states(STATE_PROCESSING)
     def skeleton_callback(self, skeletons):
@@ -221,19 +256,9 @@ class PoseDatasetBuilder():
             @param skeletons: The skeletons message to be added to the queue
 
         '''
-        if self.curr_state != STATE_PROCESSING:
-            return
-        if not skeletons.skeletons:      # Skeleton list is empty
-            rospy.loginfo("No user found. Skeleton list is empty.")
-            return
-        if not self.current_label:
-            rospy.loginfo("Label is no set. Skeleton msg discarded.")
-            return
-        if self.current_label == 'UNKNOWN':
-            rospy.loginfo('UKNOWN label. Skeleton msg discarded.')
-            return
-        # self.skeleton_queue.append((skeletons, self.current_label))
-        self.skeleton_queue.append(skeletons, self.current_label)
+        with error_handler(logger=rospy.loginfo):
+            self._skeleton_cb_preconditions(skeletons)
+            self.skeleton_queue.append(skeletons, self.current_label)
 
     def handle_state_srv(self):
         ''' Service callback to respond the request asking the current state.'''
@@ -276,19 +301,18 @@ class PoseDatasetBuilder():
         # After the first time we write, we append the data
         self.append_data = True
 
+    def _ckeck_state_processing_preconditions(self):
+        if not self.all_labels:
+            raise PreconditionError('Label is still not set. Nothing to write')
+        if not self.skeleton_queue:
+            raise PreconditionError('Processing state, but Skeletons Queue is empty')
+
     def state_processing(self):
         ''' Processes skeletons from the queue and adds them to the dataset'''
         rospy.logdebug('State: Processing')
-
-        if not self.all_labels:
-            rospy.loginfo('Label is still not set. Nothing to write')
-            return
-        if not self.skeleton_queue:
-            rospy.logdebug('Processing state, but Skeletons Queue is empty')
-            return
-        # Do stuff
-        self._do_processing()
-    
+        with error_handler(logger=rospy.logdebug):
+            self._check_state_processing_preconditions()
+            self._do_processing()
 
     def _write_labels_to_file(self, table_name):
         '''Helper method that writes all labels to dataset  
@@ -312,7 +336,6 @@ class PoseDatasetBuilder():
             self._write_labels_to_file('used_labels')
            
             # Close the file
-            #self.data_writer.store.close()
             self.data_writer.close()
             self.ready_pub.publish(self.dataset_name)
         except:
@@ -325,6 +348,13 @@ class PoseDatasetBuilder():
         ''' Final state of the state machine. Does nothing '''
         rospy.loginfo('State: END')
 
+    def _check_change_state_preconditions(self, new_state):
+        if new_state == self.curr_state: # Exit if the sate is the same
+            raise PreconditionError("We are already in " + self.curr_state)           
+        # Check if we have a valid transition
+        if new_state not in self.transitions.get(self.curr_state):
+            raise PreconditionError("Invalid state transition. State not changed")
+            
     def change_state(self, new_state):
         ''' Tries to change the current state. 
             If the state change is not allowed, it does nothing.
@@ -333,20 +363,12 @@ class PoseDatasetBuilder():
                               I{ALL_STATES}
             @return: None if change cannot be done or current state if succeeds
         '''
-        if new_state == self.curr_state: # Exit if the sate is the same
-            rospy.logdebug("We are already in " + self.curr_state)           
-            return
-
-        # Check if we have a valid transition
-        if new_state not in self.transitions.get(self.curr_state):
-            rospy.logdebug("Invalid state transition. State not changed")
-            return
-
-        self.curr_state = new_state
-        self.state_pub.publish(self.curr_state)
-        rospy.logdebug("State changed to " + self.curr_state)       
-        rospy.logwarn("State changed to " + self.curr_state)
-        return self.curr_state          
+        with error_handler(logger=rospy.logdebug):
+            self._check_change_state_preconditions(new_state)
+            self.curr_state = new_state
+            self.state_pub.publish(self.curr_state)
+            rospy.logdebug("State changed to " + self.curr_state)       
+            return self.curr_state          
 
     def run_state(self, state):
         ''' Changes the state and runs it.
@@ -388,7 +410,7 @@ class PoseDatasetBuilder():
         except:
             pass
         rospy.loginfo('Shutting down ' + rospy.get_name() + ' node.')
-
+        
 
 if __name__ == '__main__':
     try:

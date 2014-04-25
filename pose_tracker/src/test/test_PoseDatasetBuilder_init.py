@@ -31,13 +31,13 @@ class TestPoseDatasetBuilderInit(unittest.TestCase):
             pdb.PoseDatasetBuilder()
         except Exception, e:
             self.fail("PoseDatasetBuilder should have not died!\n"
-                      "Reason: " +  str(e))
+                      "Reason: " + str(e.message))
 
     @patch.object(pu, 'get_parameters')
     def test_die_if_param_not_found(self, mock_putils):
         node = None
         with patch.object(rospy, 'signal_shutdown') as mock_shutdown:
-            mock_putils.side_efect = KeyError()
+            mock_putils.side_efect = pu.ParamNotFoundError()
             node = pdb.PoseDatasetBuilder()
             mock_shutdown.assert_called()
         # node.state_srv.shutdown('Manually shutting down the service ')
