@@ -3,7 +3,7 @@ import rospy
 
 import collections as col
 import pandas as pd
-import itertools as it
+from itertools import chain
 
 import kinect.nite_skeleton_msg_utils as nsku
 
@@ -60,7 +60,7 @@ class SkeletonQueue(object):
             try:
                 skels, label = self.skeleton_queue.popleft()
                 skel_data = self._process_skeleton_msg(skels.skeletons[0])
-                yield it.chain(skel_data, label)   
+                yield chain(skel_data, label)   
             except TypeError, e:
                 rospy.logwarn("Message not added to the dataset\n"
                               "Reason: {}".format(e))

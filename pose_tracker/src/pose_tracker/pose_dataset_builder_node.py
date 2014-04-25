@@ -13,6 +13,7 @@ from functools import wraps
 from contextlib import contextmanager
 
 import param_utils as pu
+from iter_utils import as_iter
 import PoseDatasetIO as pdio
 import SkeletonQueue as skq
 
@@ -74,7 +75,6 @@ def only_in_states(states):
             'f1 called!'
     '''
     # Helper func to convert an object to an iterable (unless already it is one)
-    as_iter = lambda i: i if hasattr(i, '__iter__') else (i,)
     states = set(as_iter(states))
     
     if not states.issubset(set(ALL_STATES)):

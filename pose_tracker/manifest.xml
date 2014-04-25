@@ -11,7 +11,7 @@
   <depend package="rospy"/>
   <depend package="pose_labeler"/>
   <depend package="kinect"/>
-  <depend package="param_utils"/>
+  <depend package="rospy_utils"/>
   <depend package="std_msgs"/>
 
   <depend package="rosunit"/>
