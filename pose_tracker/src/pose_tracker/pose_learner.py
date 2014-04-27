@@ -25,12 +25,7 @@ ATTRIBS = tuple(['confidence', 'pos_x', 'pos_y', 'pos_z',
 COLUMNS = list(it.chain(HEADER,
                       it.imap('_'.join, it.product(JOINTS, ATTRIBS)),
                       ['pose', ]))
-
-positions = [i for i in COLUMNS if '_pos_' in i]
-orientations = [i for i in COLUMNS if '_orient_' in i]
 confidences = [i for i in COLUMNS if '_confidence' in i]
-pose = COLUMNS[-1]
-
 
 DEFAULT_NAME = 'pose_learner'
 COLS_TO_CLEAN=confidences   
@@ -44,8 +39,8 @@ _rm_stand_pref = partial(_clean_prefix, prefix='STAND_')
 
 def prepare_dataset(filename, group_name):
     ''' Loads the file filename and returns all the tables contained in the 
-        group 'group_name' in form of a unified dataset
-        prior to returning it, the dataset is grouped by pose, to 
+        group 'group_name' in form of a unified dataset.
+        Prior to returning it, the dataset is grouped by pose, to 
     '''
     with PoseDatasetIO(dataset=filename, columns=COLUMNS, mode='r') as dataset:
         dataset = {node._v_name: dataset.store.select(node._v_pathname). \

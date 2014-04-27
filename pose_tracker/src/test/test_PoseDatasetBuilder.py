@@ -13,6 +13,7 @@ import pose_tracker.pose_dataset_builder_node as pdb
 import pose_tracker.SkeletonQueue as skq
 import pose_tracker.PoseDatasetIO as pdio
 import param_utils as pu
+from func_utils import PreconditionError
 
 
 class TestPoseDatasetBuilder(unittest.TestCase):
@@ -24,8 +25,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         # Override default file for dataset creation. Put it in /tmp
         rospy.set_param('/dataset/filename', '/tmp/test_dataset')
         self.node = pdb.PoseDatasetBuilder()
-
-        rospy.logwarn('PARAM_LIST: {}'.format(list(pu.get_parameters(pdb.PARAM_NAMES))))
         
     def tearDown(self):
         #self.node.state_srv.shutdown('TearDown: shutting down the service')
@@ -175,7 +174,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.assertEqual(0, len(self.node.skeleton_queue),
                 msg="Should not added an empty skeleton msg to the queue")
 
-
     # unittest.skip("Skpping this Test")
     def test_skeleton_callback_does_nothing_with_invalid_labels(self):
         skeletons_msg = kin.NiteSkeletonList()
@@ -189,7 +187,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
                     msg="Should not added the skeleton msg to the queue "
                         "when the label is '{}'".format(il))        
 
-    
     # unittest.skip("Skpping this Test")      
     @patch.object(pdio, 'parse_date')
     def test_create_dataset(self, mock_pdate):
@@ -203,7 +200,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.assertEqual(self.node.data_writer.dataset_columns, 
                          self.node.dataset_columns)
 
-
     # unittest.skip("Skpping this Test")      
     @patch.object(pdb.PoseDatasetBuilder, 'create_dataset')
     def test_state_init(self, mock_create):
@@ -212,66 +208,52 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         self.assertEqual(pdb.STATE_IDLE, self.node.curr_state)
 
     # unittest.skip("Skpping this Test")
-    @patch.object(pdb.PoseDatasetBuilder, '_do_processing')
-    def test_state_processing_does_nothing_if_no_labels(
-        self, mock_processing): # mock_todf, mock_write):
-        # Make sure that we have skeletons in queue but no labels
-        [self.node.skeleton_queue.append(skel, None) for skel in ['s1', 's2', 's3']]
-        self.node.all_labels = set()
-        # self.node.state_initiating() # Fist we should init the dataset
+    def test_state_processing_calls_preconditions(self):
+        self.node._state_processing_precons = MagicMock()
         self.node.state_processing()
-        self.assertFalse(mock_processing.called)
-        
+        self.node._state_processing_precons.assert_called()
 
-    # unittest.skip("Skpping this Test")
-    # @patch.object(pdio.PoseDatasetIO, 'write')
-    # @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
-    @patch.object(pdb.PoseDatasetBuilder, '_do_processing')
-    def test_state_processing_does_nothing_if_no_skeletons_in_queue(
-        self, mock_processing):
-        # Ensure that we have labels but no skeletons in queue
+    def __setup_st_processing_precons(self):
+        ''' Prepares valid preconditions for state_processing '''
         self.node.all_labels = set(['label1', 'label2', 'label3'])
-        self.node.skeleton_queue.clear()
-        self.node.state_processing()
-        self.assertFalse(mock_processing.called)
+        for skel in ['s1', 's2', 's3']:
+            self.node.skeleton_queue.append(skel, None) 
 
     # unittest.skip("Skpping this Test")
-    @patch.object(pdio.PoseDatasetIO, 'write')
-    @patch.object(skq.SkeletonQueue, 'pop_n_to_DataFrame')
-    def test_state_processing(self, mock_todf, mock_write):
-        # self.node.all_labels = set(['label1', 'label2', 'label3'])
-        # for skel in ['s1', 's2', 's3']:
-        #     self.node.skeleton_queue.append(skel,None) 
-        self.node._check_state_processing_preconditions = MagicMock()
-        self.node.data_writer = MagicMock()
-        # self.node.state_initiating() # Fist we should init the dataset
+    def test_state_processing_precons_raises_if_no_labels(self): 
+        # Make sure that we have skeletons in queue but no labels
+        self.__setup_st_processing_precons()
+        self.node.all_labels = set()
+        with self.assertRaises(PreconditionError):
+            self.node._state_processing_precons()
+        
+    # unittest.skip("Skpping this Test")
+    def test_state_processing_precons_raises_if_no_skeletons_in_queue(self):
+        # Ensure that we have labels but no skeletons in queue
+        self.__setup_st_processing_precons()
+        self.node.skeleton_queue.clear()
+        with self.assertRaises(PreconditionError):
+            self.node._state_processing_precons()
+
+    # unittest.skip("Skpping this Test")            
+    def test_state_processing(self):
+        self.__setup_st_processing_precons()
+        self.node._write_from_queue = MagicMock()
         self.node.state_processing()
-        self.assertTrue(mock_todf.called)
+        self.node._write_from_queue.assert_called_with(self.node.rate,
+                                                       self.node.table_name,
+                                                       False)
         self.assertTrue(self.node.append_data,
-            msg="After first write, append_data should be true")
+                        msg="After first write, append_data should be true")
 
     # unittest.skip("Skpping this Test")
     @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO', autospec=True)
-    @patch('pose_tracker.SkeletonQueue.SkeletonQueue', autospec=True)
+    @patch.object(pdb.PoseDatasetBuilder, '_write_from_queue')
     def test_state_finishing_writes_remaining_data_from_skel_queue(self, 
-        mock_skq, mock_pdio):
-        chunk = [1,2,3,4,5,6]
-        mock_skq.pop_n_to_DataFrame.return_value = chunk
-        self.node.skeleton_queue = mock_skq
-        self.node.data_writer = mock_pdio
-        self.node.curr_state = pdb.STATE_FINISHING
-        self.node.run_current_state()
-        # Check if I retrieve data from queue
-        call_pop_n = mcall(-1, self.node.dataset_columns)
-        self.assertIn(call_pop_n, mock_skq.pop_n_to_DataFrame.mock_calls)
-        # Check if we write to file the remaining data from the skel queue
-        # I do it by checking if the call was called properly
-        call_write = mcall(self.node.table_name, chunk, 
-            table=True, append=self.node.append_data)
-        self.assertIn(call_write, mock_pdio.write.mock_calls)
+        mock_write, mock_pdio):
+        self.node.state_finishing()
+        mock_write.assert_called_with(-1, self.node.table_name, True)
 
-
-        
     # unittest.skip("Skpping this Test")
     @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO')
     @patch.object(pdb.PoseDatasetBuilder, '_write_labels_to_file')
@@ -292,7 +274,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
         #call_write = mcall('used_labels', Series(list(self.node.all_labels)))
         call_write = mcall('used_labels')
         self.assertIn(call_write, mock_label_write.mock_calls)
-       
 
     # unittest.skip("Skpping this Test")
     def test_state_finishing_changes_state_to_end(self):
@@ -324,7 +305,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
     #         else:
     #             self.assertFalse(mock_state_runner.called)
     #         mock_shutdown.return_value = True
-
 
 
 if __name__ == '__main__':

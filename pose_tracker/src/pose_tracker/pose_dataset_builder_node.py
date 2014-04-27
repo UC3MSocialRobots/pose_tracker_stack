@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import roslib; roslib.load_manifest('pose_tracker')
 import rospy
+from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
 from pose_tracker.srv import State
 from std_msgs.msg import String
@@ -10,9 +11,10 @@ import datetime
 import pandas as pd
 from itertools import product
 from functools import wraps
-from contextlib import contextmanager
+# from contextlib import contextmanager
 
 import param_utils as pu
+from func_utils import (error_handler, preconditions, PreconditionError)
 from iter_utils import as_iter
 import PoseDatasetIO as pdio
 import SkeletonQueue as skq
@@ -31,30 +33,30 @@ STATE_END = 'end'
 ALL_STATES = ( STATE_INIT, STATE_IDLE, STATE_PROCESSING, 
                STATE_FINISHING, STATE_END)
 
-class PreconditionError(Exception):
-    ''' Exception that shuold be raised when the preconditions of a function 
-        are not met '''
-    pass
+# class PreconditionError(Exception):
+#     ''' Exception that shuold be raised when the preconditions of a function 
+#         are not met '''
+#     pass
 
-@contextmanager
-def error_handler(logger=rospy.loginfo,  log_msg='',
-                  action=lambda:None, action_args=[], action_kwargs={}):
-    ''' Context Manager that logs errors and takes action
-        @param logger: logging function. Default: rospy.loginfo
-        @type logger: callable
-        @param log_msg: message to add to the logger in case of fail 
-                        (It will be preced to the exception message)
-        @type log_msg: str
-        @param action: function to perform if an exception occurs. Default: None
-        @type action: callable
-        @param action_args: argument list to pass to action. Default:[]
-        @param action_kwargs: argument keywords to pass to action. Default: {}'''
-    try:
-        yield
-    except Exception, e:
-        logger(''.join([log_msg, e.message]))
-        if action:
-            action(*action_args, **action_kwargs)
+# @contextmanager
+# def error_handler(logger=loginfo,  log_msg='',
+#                   action=lambda:None, action_args=[], action_kwargs={}):
+#     ''' Context Manager that logs errors and takes action
+#         @param logger: logging function. Default: loginfo
+#         @type logger: callable
+#         @param log_msg: message to add to the logger in case of fail 
+#                         (It will be preced to the exception message)
+#         @type log_msg: str
+#         @param action: function to perform if an exception occurs. Default: None
+#         @type action: callable
+#         @param action_args: argument list to pass to action. Default:[]
+#         @param action_kwargs: argument keywords to pass to action. Default: {}'''
+#     try:
+#         yield
+#     except Exception, e:
+#         logger(''.join([log_msg, e.message]))
+#         if action:
+#             action(*action_args, **action_kwargs)
 
 def only_in_states(states):
     '''Decorator method that ensures that decorated method is
@@ -64,15 +66,18 @@ def only_in_states(states):
               
        Example: 
 
-            >>> @only_in_states([STATE_PROCESSING,])
-            ... def f1(self): 
-            ...     print "f1 called!" 
-            >>> builder = PoseDatasetBuilder()
-            >>> builder.curr_state = STATE_IDLE
-            >>> f1() # f1 does nothing
-            self.curr_state = STATE_PROCESSING
-            >>> f1() 
-            'f1 called!'
+            >>> class MyClass():
+                    def __init__():
+                        self.curr_state = 'idle'
+            >>>     @only_in_states(['state_1',])
+            ...     def f1(self): 
+            ...         print "f1 called!" 
+            >>> klass = MyClass()
+            >>> klass.curr_state = 'idle'
+            >>> klass.f1() # f1 does nothing
+            >>> klass.curr_state = 'state_1'
+            >>> klass.f1() 
+            ... 'f1 called!'
     '''
     # Helper func to convert an object to an iterable (unless already it is one)
     states = set(as_iter(states))
@@ -84,7 +89,7 @@ def only_in_states(states):
         def caller(self, *args, **kwargs):
             if self.curr_state in states:
                 return method(self,*args, **kwargs)
-            rospy.logwarn("'{}'' cannot be called in state '{}'"
+            logwarn("'{}'' cannot be called in state '{}'"
                 .format(method.__name__, self.curr_state))
         return caller
     return method_wrapper
@@ -100,7 +105,7 @@ class PoseDatasetBuilder():
         rospy.init_node(name)
         self.node_name = rospy.get_name()
         rospy.on_shutdown(self.shutdown)
-        rospy.loginfo("Initializing " + self.node_name + " node...")
+        loginfo("Initializing " + self.node_name + " node...")
 
         self.current_label = None
         self.all_labels = set()     # A set to keep track of the used labels
@@ -133,7 +138,7 @@ class PoseDatasetBuilder():
         self.state_srv = rospy.Service('~state', State, self.handle_state_srv)
 
         # Parameter Loading. Shutdown node if failure occurs.
-        with error_handler(logger=rospy.logfatal, action=self.shutdown):
+        with error_handler(logger=logfatal, action=self.shutdown):
             self.load_parameters()
         
         # Combine joint names with joint attributes 
@@ -161,7 +166,7 @@ class PoseDatasetBuilder():
     def load_parameters(self):
         ''' Loads all the parameters from the ros master'''
         all_params = pu.get_parameters(PARAM_NAMES)
-        logger = rospy.logwarn
+        logger = logwarn
 
         try:
             self.dataset_config = all_params.next().value
@@ -197,14 +202,14 @@ class PoseDatasetBuilder():
             logger("Attrib names" + str(self.attrib_names))
 
         except Exception, e:
-            rospy.logfatal(e.message + " Error when loading parameters: {}".
+            logfatal(e.message + " Error when loading parameters: {}".
                 format(list(all_params)))
             rospy.signal_shutdown("node " + rospy.get_name() + \
                 " shot down because parameters were not found")
 
     # --- Topic callbacks ---
 
-    def _check_command_preconditions(self, command):
+    def _command_cb_preconditions(self, command):
         if self.curr_state == STATE_END:
             raise PreconditionError("Already in State:END. \
                                      Too late to change the state")
@@ -213,20 +218,19 @@ class PoseDatasetBuilder():
                 "State could not be changed since command '" \
                 + str(command.data) + "' does not map to any state")
 
+    @preconditions(_command_cb_preconditions, logger=loginfo, reraise=False)
     def command_callback(self, command):
         ''' Processes the received command and sets the current state 
             according to this command.
             See self.command_mapper dict to know the command->state mappings
         '''
-        with error_handler(logger=rospy.loginfo):
-            self._check_command_preconditions(command)
-            self.change_state(self.command_mapper[command.data])
-    
+        self.change_state(self.command_mapper[command.data])
+        
     @only_in_states(STATE_PROCESSING)
     def label_callback(self, label):
         ''' Updates the label of the received data ''' 
         self.current_label = label.data
-        rospy.loginfo("Received label:" + self.current_label)
+        loginfo("Received label:" + self.current_label)
         if label.data != 'UNKNOWN':
             self.all_labels.add(label.data) # Update the set of used labels
 
@@ -240,7 +244,7 @@ class PoseDatasetBuilder():
         if self.current_label == 'UNKNOWN':
             raise PreconditionError('UKNOWN label. Skeleton msg discarded.')
             
-
+    @preconditions(_skeleton_cb_preconditions, logger=loginfo, reraise=False)
     @only_in_states(STATE_PROCESSING)
     def skeleton_callback(self, skeletons):
         ''' Adds the received skeletons message to the queue
@@ -251,14 +255,10 @@ class PoseDatasetBuilder():
               - State is processing
               - Label is set
               - Label != "UNKNOWN" 
-
-            @type skeletons: kinect.msg.NiteSkeletonList
             @param skeletons: The skeletons message to be added to the queue
-
+            @type skeletons: kinect.msg.NiteSkeletonList
         '''
-        with error_handler(logger=rospy.loginfo):
-            self._skeleton_cb_preconditions(skeletons)
-            self.skeleton_queue.append(skeletons, self.current_label)
+        self.skeleton_queue.append(skeletons, self.current_label)
 
     def handle_state_srv(self):
         ''' Service callback to respond the request asking the current state.'''
@@ -279,82 +279,69 @@ class PoseDatasetBuilder():
     def state_initiating(self):
         ''' Initial state. 
             Transitional state that creates dataset and changes state to IDLE'''
-        rospy.logdebug('State: Initiating')
+        logdebug('State: Initiating')
         self.create_dataset()
         self.change_state(STATE_IDLE)
         
-
     def state_idle(self):
         ''' Performs operations of the sate "idle"'''
-        # rospy.loginfo('State: Idle')
+        # loginfo('State: Idle')
         pass
 
-
-    def _do_processing(self):
-        ''' Main function of state_processing. 
-        It's where L{state_processing} does all the stuff '''
-        # We process one chunk per second
-        df = self.skeleton_queue \
-            .pop_n_to_DataFrame(self.rate, self.dataset_columns)
-        self.data_writer.write(self.table_name, df, 
-                                table=True, append=self.append_data)
-        # After the first time we write, we append the data
-        self.append_data = True
-
-    def _ckeck_state_processing_preconditions(self):
+    def _state_processing_precons(self):
         if not self.all_labels:
             raise PreconditionError('Label is still not set. Nothing to write')
         if not self.skeleton_queue:
             raise PreconditionError('Processing state, but Skeletons Queue is empty')
-
+    
+    @preconditions(_state_processing_precons, logger=logdebug, reraise=False)
     def state_processing(self):
         ''' Processes skeletons from the queue and adds them to the dataset'''
-        rospy.logdebug('State: Processing')
-        with error_handler(logger=rospy.logdebug):
-            self._check_state_processing_preconditions()
-            self._do_processing()
+        logdebug('State: Processing')
+        # We process one chunk per second
+        self._write_from_queue(self.rate, self.table_name, self.append_data)
+        # After the first time we write, we append the data
+        self.append_data = True
+
+    def _write_from_queue(self, items, table_name, append, **kwargs):
+        df = self.skeleton_queue.pop_n_to_DataFrame(items, self.dataset_columns)
+        self.data_writer.write(table_name, df, table=True, append=append)
 
     def _write_labels_to_file(self, table_name):
         '''Helper method that writes all labels to dataset  
            
            @param table_name: the name of the table 
                               where the labels will be stored'''
-        self.data_writer.write(table_name, 
-                                    pd.Series(list(self.all_labels)))
+        self.data_writer.write(table_name, pd.Series(list(self.all_labels)))
 
     def state_finishing(self):
         ''' Transitionalstate to state_end.
             Dumps remaining skeletons to the dataset and closes the file'''
-        rospy.loginfo('State: finishing')
+        loginfo('State: finishing')
         try:
             # Write to the file the remaining skeletons of the queue
-            df = self.skeleton_queue.pop_n_to_DataFrame(-1,self.dataset_columns)
-            self.data_writer.write(self.table_name, df,
-                                    table=True, append=self.append_data)
-            
-            # Store a list with all labels if data in dataset
+            self._write_from_queue(-1, self.table_name, True)
             self._write_labels_to_file('used_labels')
-           
-            # Close the file
-            self.data_writer.close()
+            self.data_writer.close()  # Close the file
             self.ready_pub.publish(self.dataset_name)
         except:
-            rospy.logdebug("In shutdown: file is already closed")
+            logdebug("Finishing. File is already closed")
         self.change_state(STATE_END)
         self.run_state(STATE_END)
 
 
     def state_end(self):
         ''' Final state of the state machine. Does nothing '''
-        rospy.loginfo('State: END')
+        loginfo('State: END')
 
-    def _check_change_state_preconditions(self, new_state):
+    def _change_state_preconditions(self, new_state):
         if new_state == self.curr_state: # Exit if the sate is the same
             raise PreconditionError("We are already in " + self.curr_state)           
         # Check if we have a valid transition
         if new_state not in self.transitions.get(self.curr_state):
             raise PreconditionError("Invalid state transition. State not changed")
-            
+    
+    @preconditions(_change_state_preconditions, logger=logdebug, reraise=False)   
     def change_state(self, new_state):
         ''' Tries to change the current state. 
             If the state change is not allowed, it does nothing.
@@ -363,12 +350,10 @@ class PoseDatasetBuilder():
                               I{ALL_STATES}
             @return: None if change cannot be done or current state if succeeds
         '''
-        with error_handler(logger=rospy.logdebug):
-            self._check_change_state_preconditions(new_state)
-            self.curr_state = new_state
-            self.state_pub.publish(self.curr_state)
-            rospy.logdebug("State changed to " + self.curr_state)       
-            return self.curr_state          
+        self.curr_state = new_state
+        self.state_pub.publish(self.curr_state)
+        logdebug("State changed to " + self.curr_state)       
+        return self.curr_state          
 
     def run_state(self, state):
         ''' Changes the state and runs it.
@@ -409,7 +394,7 @@ class PoseDatasetBuilder():
             self.state_srv.shutdown()
         except:
             pass
-        rospy.loginfo('Shutting down ' + rospy.get_name() + ' node.')
+        loginfo('Shutting down ' + rospy.get_name() + ' node.')
         
 
 if __name__ == '__main__':
