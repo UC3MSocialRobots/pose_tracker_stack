@@ -260,8 +260,6 @@ class TestPoseDatasetBuilder(unittest.TestCase):
     @patch.object(pdb.PoseDatasetBuilder, '_write_from_queue')
     def test_state_finishing_writes_all_labels(self, 
         mock_write_fq, mock_label_write, mock_write):
-        self.node.state_initiating() # Init dataset
-        self.node.curr_state = pdb.STATE_FINISHING
         # TODO:
         # Somehow the test fails when 0 or >1 labels in label list.
         # Seems to be a bug in assertIn or in the Mock
