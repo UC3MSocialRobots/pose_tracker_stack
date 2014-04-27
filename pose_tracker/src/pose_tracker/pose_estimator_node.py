@@ -2,10 +2,12 @@
 
 import roslib; roslib.load_manifest('pose_tracker')
 import rospy
+from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 from std_msgs.msg import String
 
 from pandas import Series
 
+from func_utils import error_handler as eh
 import param_utils as pu
 import pose_learner as pl
 
@@ -13,6 +15,7 @@ import kinect.nite_skeleton_msg_utils as nsku
 
 DEFAULT_NAME = 'pose_estimator'
 PARAMS = ('estimator_file', 'dataset_columns', 'drop_columns' )
+
 
 class PoseEstimatorNode():
     ''' Class that builds the node
@@ -25,7 +28,8 @@ class PoseEstimatorNode():
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initializing " + self.node_name + " node...")
         
-        self.load_parameters()
+        with eh(action=self.shutdown):
+            self.load_parameters()
 
     def load_parameters(self):
         ''' Loads the parameters needed by the node.
@@ -39,7 +43,7 @@ class PoseEstimatorNode():
                 setattr(self, pname, p.value)
         except:
             rospy.logfatal("Couldn't load Parameters: {}".format(list(params)))
-            self.shutdown()
+            raise
 
     def load_estimator(self, filename=None):
         ''' Loads an estimator from file

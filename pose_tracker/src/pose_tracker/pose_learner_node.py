@@ -2,10 +2,12 @@
 
 import roslib; roslib.load_manifest('pose_tracker')
 import rospy
+from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 from std_msgs.msg import String
 
 import param_utils as pu
 import pose_learner as pl
+from func_utils import error_handler
 
 DEFAULT_NAME = 'pose_learner'
 PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid', 
@@ -22,16 +24,11 @@ class PoseLearnerNode():
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initializing " + self.node_name + " node...")
         
-        try:
+        with error_handler(logger=logfatal, action=self.shutdown):
             self.load_parameters()
-    
             self.classif = pl.load_class_from_name(self.algorithm)()
             rospy.loginfo("Classifier loaded: {}".format(self.classif))
-        
             self.load_dataset(self.dataset_file, self.table_name).fit().save_clf()        
-        except Exception, e:
-            rospy.logfatal("Couldn't init the node. Reason: {}".format(e))
-            self.shutdown()
 
         rospy.Subscriber("~learn_this", String, self._learn_dataset_cb)
         self.ready_pub = rospy.Publisher('~classifier_ready', String)
@@ -47,24 +44,21 @@ class PoseLearnerNode():
                 pname = p.name.rsplit('/', 1)[-1]  # Get rid of param namespace
                 setattr(self, pname, p.value)
         except:
-            rospy.logerror("Couldn't load Parameters: {}".format(list(params)))
+            logerr("Couldn't load Parameters: {}".format(list(params)))
             raise
 
     def _learn_dataset_cb(self, dataset_file):
-        try:
+        with error_handler(reraise=False):
             self.load_dataset(dataset_file.data, self.table_name)
             self.fit().save_clf()
-        except IOError:
-            pass
 
     def load_dataset(self, filename, table_name):
-        try:
+        with error_handler(logger=logerr, 
+                           log_msg="Couldn't load dataset {}".format(filename),
+                           errors=IOError, reraise=True):
             self.dataset = pl.prepare_dataset(filename, table_name) \
-                         .drop(self.drop_columns, axis=1)
-            return self
-        except IOError:
-            rospy.logerror("Couldn't load dataset {}".format(filename))
-            raise
+                           .drop(self.drop_columns, axis=1)
+        return self
         
     def fit(self):
         ''' Fits the classifier to the dataset data'''
