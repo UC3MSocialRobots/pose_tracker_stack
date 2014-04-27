@@ -329,7 +329,6 @@ class PoseDatasetBuilder():
         self.change_state(STATE_END)
         self.run_state(STATE_END)
 
-
     def state_end(self):
         ''' Final state of the state machine. Does nothing '''
         loginfo('State: END')

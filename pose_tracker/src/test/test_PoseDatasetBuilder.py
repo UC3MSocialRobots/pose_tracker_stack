@@ -257,10 +257,9 @@ class TestPoseDatasetBuilder(unittest.TestCase):
     # unittest.skip("Skpping this Test")
     @patch('pose_tracker.PoseDatasetIO.PoseDatasetIO')
     @patch.object(pdb.PoseDatasetBuilder, '_write_labels_to_file')
-    @patch.object(skq.SkeletonQueue, '_prepare_chunk')
-    @patch.object(skq.SkeletonQueue, '_chunk_to_data_frame')
+    @patch.object(pdb.PoseDatasetBuilder, '_write_from_queue')
     def test_state_finishing_writes_all_labels(self, 
-        mock_todf, mock_pchunk, mock_label_write, mock_write):
+        mock_write_fq, mock_label_write, mock_write):
         self.node.state_initiating() # Init dataset
         self.node.curr_state = pdb.STATE_FINISHING
         # TODO:
