@@ -1,0 +1,5 @@
+# Service that responds with some info of a dataset
+---
+string filename         # If dataset is not ready the field will be empty.
+string[] columns        # Columns of the dataset
+string[] labels         # All the labels used in the dataset
