@@ -6,6 +6,7 @@ from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 from std_msgs.msg import String
 
 import param_utils as pu
+from func_utils import load_class
 import pose_learner as pl
 from func_utils import error_handler
 
@@ -26,7 +27,7 @@ class PoseLearnerNode():
         
         with error_handler(logger=logfatal, action=self.shutdown):
             self.load_parameters()
-            self.classif = pl.load_class_from_name(self.algorithm)()
+            self.classif = load_class(self.algorithm)()
             rospy.loginfo("Classifier loaded: {}".format(self.classif))
             self.load_dataset(self.dataset_file, self.table_name).fit().save_clf()        
 
@@ -74,6 +75,8 @@ class PoseLearnerNode():
         self.ready_pub.publish(self.out_file)
         rospy.loginfo("Classifier saved to: {}".format(self.out_file))
         return self
+
+
 
     def run(self):
         ''' Runs the node until shutdowns'''

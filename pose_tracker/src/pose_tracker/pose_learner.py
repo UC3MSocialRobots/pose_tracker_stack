@@ -46,7 +46,7 @@ def prepare_dataset(filename, group_name):
         dataset = {node._v_name: dataset.store.select(node._v_pathname). \
                                               groupby('pose').mean(). \
                                               rename(_rm_stand_pref)
-                  for node in dataset.store.get_node(group_name) }
+                   for node in dataset.store.get_node(group_name) }
         return pd.concat(dataset)
 
 
@@ -123,31 +123,3 @@ def load_clf(filename):
     from sklearn.externals import joblib
     loaded_model = joblib.load(filename)
     return loaded_model
-
-
-def load_class_from_name(full_name):
-    '''
-        Returns an instance of a Python class from its qualified full name.
-
-        Adapted from this SO Answer: http://stackoverflow.com/a/547867/630598
-        @type full_name: string
-        @param full_name: Class full name: foo.bar.klass
-        @return: an instance of foo.bar.Klass. It has to be called just
-        
-        Example:
-        --------
-        >>> # Assume we already are in module foo.bar
-        >>> Class Klass:
-        >>>     __init__():
-        >>>         print('klass instantiated')
-
-        >>> my_class = load_class_from_name('foo.bar.Klass')
-        >>> my_class()
-
-        ... 'klass instantiated'
-
-    '''
-    module_name, klass_name = full_name.rsplit('.', 1)
-    mod = __import__(module_name, fromlist=[klass_name])
-    klass = getattr(mod, klass_name)
-    return klass

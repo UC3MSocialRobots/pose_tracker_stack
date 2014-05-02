@@ -3,7 +3,7 @@ import roslib; roslib.load_manifest('pose_tracker')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
-from pose_tracker.srv import State
+from pose_tracker.srv import (State, DatasetInfo)
 from std_msgs.msg import String
 import kinect.msg as kin
 
@@ -33,31 +33,6 @@ STATE_END = 'end'
 ALL_STATES = ( STATE_INIT, STATE_IDLE, STATE_PROCESSING, 
                STATE_FINISHING, STATE_END)
 
-# class PreconditionError(Exception):
-#     ''' Exception that shuold be raised when the preconditions of a function 
-#         are not met '''
-#     pass
-
-# @contextmanager
-# def error_handler(logger=loginfo,  log_msg='',
-#                   action=lambda:None, action_args=[], action_kwargs={}):
-#     ''' Context Manager that logs errors and takes action
-#         @param logger: logging function. Default: loginfo
-#         @type logger: callable
-#         @param log_msg: message to add to the logger in case of fail 
-#                         (It will be preced to the exception message)
-#         @type log_msg: str
-#         @param action: function to perform if an exception occurs. Default: None
-#         @type action: callable
-#         @param action_args: argument list to pass to action. Default:[]
-#         @param action_kwargs: argument keywords to pass to action. Default: {}'''
-#     try:
-#         yield
-#     except Exception, e:
-#         logger(''.join([log_msg, e.message]))
-#         if action:
-#             action(*action_args, **action_kwargs)
-
 def only_in_states(states):
     '''Decorator method that ensures that decorated method is
        only called in the entered states.
@@ -67,7 +42,7 @@ def only_in_states(states):
        Example: 
 
             >>> class MyClass():
-                    def __init__():
+                    def __init__(self):
                         self.curr_state = 'idle'
             >>>     @only_in_states(['state_1',])
             ...     def f1(self): 
@@ -136,6 +111,8 @@ class PoseDatasetBuilder():
 
         # Services
         self.state_srv = rospy.Service('~state', State, self.handle_state_srv)
+        self.dsinfo_srv = rospy.Service('~dataset_info', DatasetInfo,
+                                         self.handle_dsinfo_srv)
 
         # Parameter Loading. Shutdown node if failure occurs.
         with error_handler(logger=logfatal, action=self.shutdown):
@@ -264,6 +241,18 @@ class PoseDatasetBuilder():
         ''' Service callback to respond the request asking the current state.'''
         return State.StateResponse(self.curr_state)
 
+    def handle_dsinfo_srv(self):
+        ''' Service callback that returns some information 
+            of the dataset being used.
+            @see L{DatasetInfo} service
+        '''
+        filename = ''
+        if self.curr_state == STATE_END:
+            filename = self.dataset_name
+        return DatasetInfo.DatasetInfoResponse(filename, 
+                                               self.dataset_columns, 
+                                               sorted(self.all_labels))
+
     def create_dataset(self):
         '''Creates dataset file and fills metadata.'''
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
@@ -391,6 +380,7 @@ class PoseDatasetBuilder():
             self.states[STATE_FINISHING]()
         try:
             self.state_srv.shutdown()
+            self.dsinfo_srv.shutdown()
         except:
             pass
         loginfo('Shutting down ' + rospy.get_name() + ' node.')

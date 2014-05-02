@@ -43,7 +43,7 @@ class SkeletonQueue(object):
             self._check_joints(joint_names, self.joint_names)
             return data
         except TypeError as e:
-            raise
+            raise e
 
     def _calc_chunksize(self, chunksize):
         ''' Calculates how many elements to retrieve from squeleton queue'''
