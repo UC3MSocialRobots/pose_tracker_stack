@@ -44,8 +44,8 @@ def prepare_dataset(filename, group_name):
     '''
     with PoseDatasetIO(dataset=filename, columns=COLUMNS, mode='r') as dataset:
         dataset = {node._v_name: dataset.store.select(node._v_pathname). \
-                                              groupby('pose').mean(). \
-                                              rename(_rm_stand_pref)
+                                               groupby('pose').mean(). \
+                                               rename(_rm_stand_pref)
                    for node in dataset.store.get_node(group_name) }
         return pd.concat(dataset)
 
