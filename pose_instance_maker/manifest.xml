@@ -16,6 +16,10 @@
   <depend package="rosunit"/>
   <depend package="rostest"/>
 
+  <rosdep name="toolz"/>
+  <rosdep name="more-itertools"/>
+  <rosdep name="mock"/>
+
 </package>
 
 

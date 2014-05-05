@@ -29,5 +29,5 @@ rosbuild_genmsg()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-# rosbuild_add_pyunit(src/test/test_PoseDatasetIO_writer.py)
+rosbuild_add_pyunit(src/test/test_instance_builder.py)
 # rosbuild_add_rostest(test/pose_dataset_builder.test)
