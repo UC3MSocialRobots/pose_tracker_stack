@@ -52,7 +52,7 @@ class TestPiTrackerIBuiler(unittest.TestCase):
 
     def _make_instance(self):
         ''' Fill instance with:
-                user_id and 5 fake positions, orientaitons and confidences
+                user_id, and 5 fake positions, orientaitons and confidences
             Position is a Vector3(x, y, z)
             Orientation is a Quaternion(x, y, z, w)
             Confidence is one field'''
@@ -73,6 +73,11 @@ class TestPiTrackerIBuiler(unittest.TestCase):
     def test_parse_msg(self):
         self.assertEqual(self.instance, 
                          self.builder.parse_msg(self.skel, 'lalala'))
+
+
+    def test_get_msg_class(self):
+        skel = self.builder.get_msg_class()()
+        self.assertTrue(isinstance(skel, Skeleton))
 
 
 # class TestKinectIBuilder(unittest.TestCase):

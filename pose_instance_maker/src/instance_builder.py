@@ -37,7 +37,8 @@ class IBuilder():
         pass
 
     def get_msg_class():
-        ''' Should return a 
+        ''' Should return the class of the skeleton message 
+            that the builder is able to parse
         '''
         pass
 
