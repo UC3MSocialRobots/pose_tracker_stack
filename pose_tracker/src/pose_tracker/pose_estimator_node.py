@@ -86,11 +86,11 @@ class PoseEstimatorNode():
     def skeleton_cb(self, skels):
         with eh(logger=logwarn, low_msg='Could not estimate pose. '):
             pe_msg = PoseEstimated()
-            pe_raw_instance = self._unpack_skeleton_msg(skels.skeletons[0]) 
+            pe_msg.raw_instance = self._unpack_skeleton_msg(skels.skeletons[0]) 
             pe_msg.predicted_label_id = self.predict(pe_msg.raw_instance)
             pe_msg.predicted_label = self.labels[pe_msg.predicted_label_id]
             pe_msg.label_names = self.labels
-            pe_msg.label_probas = self.predict_proba(msg.raw_instance)
+            pe_msg.label_probas = self.predict_proba(pe_msg.raw_instance)
     
             self.publisher.publish(pe_msg)
 
