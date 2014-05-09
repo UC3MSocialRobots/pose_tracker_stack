@@ -18,12 +18,25 @@ def parse_label(label):
         return 'UNKNOWN'
     return str(label)
 
+def _parse_msg_preconditions(msg, msg_class, label):
+    ''' Processes some preconditions for incoming messages '''
+    if not isinstance(msg, msg_class):
+         raise TypeError("Messge not a {}.msg".format(msg_class()))
+    if not isinstance(label, str):
+         raise TypeError("Label is not a string")
+
 
 class IBuilder():
     ''' Base class that defines the interface to that other builders
         should implement.
     '''
     def __init__(self, *args, **kwargs):
+        pass
+
+    def get_msg_class():
+        ''' Should return the class of the skeleton message 
+            that the builder is able to parse
+        '''
         pass
 
     def parse_msg(self, msg, label):
@@ -36,17 +49,14 @@ class IBuilder():
         '''
         pass
 
-    def get_msg_class():
-        ''' Should return the class of the skeleton message 
-            that the builder is able to parse
-        '''
-        pass
-
 
 class PiTrackerIBuilder():
     def __init__(self, *args, **kwargs):
         pass
     
+    def get_msg_class(self):
+        return Skeleton
+
     def parse_msg(self, msg, label):
         ''' Parses a pi_tracker.msg.Skeleton message and converts it to a 
             L{PoseInstance} message
@@ -54,20 +64,15 @@ class PiTrackerIBuilder():
             @type msg: pi_tracker.msg.Skeleton
             @return: The instance message already formatted
             @rtype: pose_instance_builder.msg.PoseInstance
+            @raise TypeError if preconditions fail
         '''
-        if not isinstance(msg, Skeleton):
-            raise TypeError("Messge is not a pi_tracker/msg/Skeleton.msg")
-        if not isinstance(label, str):
-            raise TypeError("Label is not a string")
-
+        _parse_msg_preconditions(msg, self.get_msg_class(), label)
+        
         msg_fields = izip(msg.position, msg.orientation, msg.confidence)
         instance = cons(msg.user_id, concat(starmap(self._parse, msg_fields)))
         return PoseInstance(columns=msg.name, 
                             label=parse_label(label),
                             instance=list(instance))
-
-    def get_msg_class(self):
-        return Skeleton
 
     def _parse(self, position, orientation, confidence):
         return (position.x, position.y, position.z,
@@ -79,5 +84,11 @@ class KinectIBuilder():
     def __init__():
         pass
     
+    def get_msg_class(self):
+        return NiteSkeletonList
+
     def parse_msg(self, msg, label):
+        _parse_msg_preconditions(msg, self.get_msg_class(), label)
+
         pass
+

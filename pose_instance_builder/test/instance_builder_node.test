@@ -1,0 +1,7 @@
+<launch>
+  <test test-name="TestInstanceBuilderNode"
+        pkg="pose_instance_builder"
+        type="test_instance_builder_node.py"
+        time-limit="60.0"/>
+        <param name="builder_name" value="PiTrackerIBuilder" type="str" />
+</launch>

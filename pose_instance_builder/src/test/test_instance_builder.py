@@ -45,10 +45,12 @@ class TestPiTrackerIBuiler(unittest.TestCase):
         
     def _make_skeleton_msg(self):
         ''' Helper method to produce facke Skeleton msgs '''
+        position = Vector3(*linspace(1,3,3))
+        orientation = Quaternion(*linspace(1,4,4))
         return Skeleton(user_id=0, name=['c0', 'c1', 'c2', 'c3', 'c4'],
                         confidence=linspace(1,1,5),
-                        position=list(repeat(Vector3(*linspace(1,3,3)), 5)),
-                        orientation=list(repeat(Quaternion(*linspace(1,4,4)),5)))
+                        position=list(repeat(position, 5)),
+                        orientation=list(repeat(orientation,5)))
 
     def _make_instance(self):
         ''' Fill instance with:
@@ -94,6 +96,6 @@ class TestPiTrackerIBuiler(unittest.TestCase):
 
 if __name__ == '__main__':
     import rosunit
-    rosunit.unitrun(PKG, 'test_TestParseLabel', TestParseLabel)
-    rosunit.unitrun(PKG, 'test_TestPiTrackerIBuiler', TestPiTrackerIBuiler)
+    rosunit.unitrun(PKG, 'test_ParseLabel', TestParseLabel)
+    rosunit.unitrun(PKG, 'test_PiTrackerIBuiler', TestPiTrackerIBuiler)
     # rosunit.unitrun(PKG, 'test_KinectIBuilder', TestKinectIBuilder)

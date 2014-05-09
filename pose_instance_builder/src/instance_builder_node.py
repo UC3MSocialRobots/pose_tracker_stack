@@ -35,6 +35,16 @@ def load_instance_builder(name, module_name='instance_builder'):
     return klass()
 
 
+
+def load_params(self):
+    ''' loads parameters that will be used by the node '''
+    try:
+        return rospy.get_param('~builder_type')
+    except:
+        logerr('Could not load parameter "~builder_type"')
+        raise
+
+
 class InstanceBuilderNode():
     ''' Class that builds a dataset
 
@@ -49,25 +59,17 @@ class InstanceBuilderNode():
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
                 action=self.shutdown):
-            self.load_params()
-            self.builder = load_instance_builder(self.builder_name)
+            self.builder_type = self.load_params()
+            self.builder = load_instance_builder(self.builder_type)
             self.skeleton_msg = self.builder.get_msg_class()
 
         rospy.Subscriber("skeletons", self.skeleton_msg, self.skeleton_cb)
 
         # Publishers
         self.publisher = rospy.Publisher('~pose_instance', PoseInstance)
-
-    def load_params(self):
-        try:
-            self.builder_name = rospy.get_param('~builder_name')
-        except:
-            logerr('Could not load parameter "~builder_name"')
-            raise
        
     def skeleton_cb(self, msg):
         self.publisher.publish(self.builder.parse_msg(msg))
-
 
     def run():
         rospy.spin()
