@@ -1,4 +1,4 @@
-PKG = 'pose_instance_maker'
+PKG = 'pose_instance_builder'
 import roslib; roslib.load_manifest(PKG)
 
 
@@ -11,7 +11,7 @@ from toolz import (concat, cons)
 from instance_builder import (parse_label, PiTrackerIBuilder, KinectIBuilder)
 from pi_tracker.msg import Skeleton
 from geometry_msgs.msg import (Vector3, Quaternion)
-from pose_instance_maker.msg import PoseInstance
+from pose_instance_builder.msg import PoseInstance
         
 
 class TestParseLabel(unittest.TestCase):

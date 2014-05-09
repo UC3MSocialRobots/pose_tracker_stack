@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('pose_tracker')
+import roslib; roslib.load_manifest('pose_instance_builder')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
 from func_utils import error_handler as eh
 
-from pose_instance_maker.msg import PoseInstance
+from pose_instance_builder.msg import PoseInstance
 
 
 DEFAULT_NAME = 'instance_builder_node'

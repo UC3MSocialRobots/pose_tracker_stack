@@ -1,5 +1,5 @@
 <package>
-  <description brief="pose_instance_maker">
+  <description brief="pose_instance_builder">
 
      Transforms from various skeleton trackers to a same instance model
 
@@ -7,7 +7,7 @@
   <author>Víctor González</author>
   <license>GPLv3</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/pose_instance_maker</url>
+  <url>http://ros.org/wiki/pose_instance_builder</url>
   <depend package="kinect"/>
   <depend package="pi_tracker"/>
   <depend package="pose_labeler"/>

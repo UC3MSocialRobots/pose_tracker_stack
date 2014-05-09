@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import roslib; roslib.load_manifest('pose_instance_maker')
+import roslib; roslib.load_manifest('pose_instance_builder')
 #import rospy
 #from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
@@ -8,7 +8,7 @@ from itertools import (izip, starmap)
 from toolz import (concat, cons)
 
 from pi_tracker.msg import Skeleton
-from pose_instance_maker.msg import PoseInstance
+from pose_instance_builder.msg import PoseInstance
 
 def parse_label(label):
     ''' Parses the entered label.
@@ -32,7 +32,7 @@ class IBuilder():
                         Each Builder will be able to process a single msg type
                         Thus, the type of msg will depend on the Builder.
             @return: The instance message filled with the msg data
-            @rtype: pose_instance_maker.msg.PoseInstance
+            @rtype: pose_instance_builder.msg.PoseInstance
         '''
         pass
 
@@ -53,7 +53,7 @@ class PiTrackerIBuilder():
             @name msg: The message to be parsed
             @type msg: pi_tracker.msg.Skeleton
             @return: The instance message already formatted
-            @rtype: pose_instance_maker.msg.PoseInstance
+            @rtype: pose_instance_builder.msg.PoseInstance
         '''
         if not isinstance(msg, Skeleton):
             raise TypeError("Messge is not a pi_tracker/msg/Skeleton.msg")
