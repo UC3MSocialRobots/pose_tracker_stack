@@ -1,13 +1,17 @@
 <launch>
   <!-- <param name="skeleton_topic" value="/skeleton" type="str" /> -->
-  <test test-name="InstanceBuilderNode"
+  <node name="pose_labeler" 
+        pkg="pose_labeler" type="pose_labeler_node.py" 
+        required="true" output="screen">
+        <param name='min_confidence' type="double" value="0.2"/>
+  </node>
+  <node test-name="InstanceBuilderNode"
         pkg="pose_instance_builder"
         type="test_instance_builder_node.py"
-        time-limit="60.0">
+        time-limit="60.0"/>
         <param name="builder_type" 
                value="instance_builder.PiTrackerIBuilder" type="str" />
         <param name="skeleton_topic" value="/skeleton" type="str" />
-  </test>
 
 
 </launch>

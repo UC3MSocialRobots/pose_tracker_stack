@@ -8,27 +8,11 @@ from itertools import repeat
 from more_itertools import ncycles
 from toolz import (concat, cons)
 
-from instance_builder import (parse_label, PiTrackerIBuilder, KinectIBuilder)
+from instance_builder import (PiTrackerIBuilder, KinectIBuilder)
 from pi_tracker.msg import Skeleton
 from geometry_msgs.msg import (Vector3, Quaternion)
 from pose_instance_builder.msg import PoseInstance
         
-
-class TestParseLabel(unittest.TestCase):
-    """Tests"""
-    def __init__(self, *args):
-        super(TestParseLabel, self).__init__(*args)
-    
-    def test_parse_label_returns_UNKNOWN_label(self):
-        self.assertEqual('UNKNOWN', parse_label('UNKNOWN'))
-        self.assertEqual('UNKNOWN', parse_label(None))
-        self.assertEqual('UNKNOWN', parse_label([]))
-
-    def test_parse_label(self):
-        self.assertEqual('lalala', parse_label('lalala'))
-        self.assertEqual('123', parse_label(123))
-        self.assertEqual('123.0', parse_label(123.0))
-
 
 class TestPiTrackerIBuiler(unittest.TestCase):
     """Tests"""
@@ -66,8 +50,9 @@ class TestPiTrackerIBuiler(unittest.TestCase):
                             instance = list(inst))
         
     def test_parse_msg_raises_TypeError_with_bad_peconditions(self):
-        bad_msgs = ((None, 'lalala'), (self.skel, None),
-                    (123, 'lalala'), (self.skel, 1234))
+        bad_msgs = ((None, 'lalala'),  (123, 'lalala'), 
+                    (self.skel, None), (self.skel, 123), (self.skel, 'UNKNOWN'), 
+                    (self.skel, None), (self.skel, []))
         for instance, label in bad_msgs:
             with self.assertRaises(TypeError):
                 self.builder.parse_msg(instance, label)
@@ -96,6 +81,5 @@ class TestPiTrackerIBuiler(unittest.TestCase):
 
 if __name__ == '__main__':
     import rosunit
-    rosunit.unitrun(PKG, 'test_ParseLabel', TestParseLabel)
     rosunit.unitrun(PKG, 'test_PiTrackerIBuiler', TestPiTrackerIBuiler)
     # rosunit.unitrun(PKG, 'test_KinectIBuilder', TestKinectIBuilder)

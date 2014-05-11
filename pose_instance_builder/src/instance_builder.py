@@ -10,20 +10,23 @@ from toolz import (concat, cons)
 from pi_tracker.msg import Skeleton
 from pose_instance_builder.msg import PoseInstance
 
-def parse_label(label):
-    ''' Parses the entered label.
-        @return: str(label) or "UNKNOWN" if the label is empty.
-        @rtype: str'''
-    if not label:
-        return 'UNKNOWN'
-    return str(label)
+# def parse_label(label):
+#     ''' Parses the entered label.
+#         @return: str(label) or "UNKNOWN" if the label is empty.
+#         @rtype: str'''
+   
+#     return str(label)
 
 def _parse_msg_preconditions(msg, msg_class, label):
     ''' Processes some preconditions for incoming messages '''
     if not isinstance(msg, msg_class):
          raise TypeError("Messge not a {}.msg".format(msg_class()))
+    if not label:
+        raise TypeError('Empty label')
     if not isinstance(label, str):
          raise TypeError("Label is not a string")
+    if label == 'UNKNOWN':
+        raise TypeError('"UNKNOWN" label')
 
 
 class IBuilder():
@@ -71,7 +74,7 @@ class PiTrackerIBuilder():
         msg_fields = izip(msg.position, msg.orientation, msg.confidence)
         instance = cons(msg.user_id, concat(starmap(self._parse, msg_fields)))
         return PoseInstance(columns=msg.name, 
-                            label=parse_label(label),
+                            label=str(label),
                             instance=list(instance))
 
     def _parse(self, position, orientation, confidence):

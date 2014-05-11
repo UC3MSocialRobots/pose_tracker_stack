@@ -4,8 +4,11 @@ import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
 from func_utils import error_handler as eh
+from func_utils import load_class
+from param_utils import get_parameters, ParamNotFoundError
 
 from pose_instance_builder.msg import PoseInstance
+from std_msgs.msg import String
 
 
 DEFAULT_NAME = 'instance_builder_node'
@@ -32,18 +35,17 @@ def load_instance_builder(name, module_name='instance_builder'):
     '''
     mod = __import__(module_name, fromlist=[name])
     klass = getattr(mod, name)
-    return klass()
+    return klass
 
 
-
-def load_params(self):
+def load_params(params):
     ''' loads parameters that will be used by the node '''
     try:
-        return rospy.get_param('~builder_type')
-    except:
-        logerr('Could not load parameter "~builder_type"')
+        for pname, pvalue in get_parameters(params):
+            yield pvalue
+    except ParamNotFoundError, e:
+        logerr(e)
         raise
-
 
 class InstanceBuilderNode():
     ''' Class that builds a dataset
@@ -59,17 +61,46 @@ class InstanceBuilderNode():
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
                 action=self.shutdown):
-            self.builder_type = self.load_params()
-            self.builder = load_instance_builder(self.builder_type)
-            self.skeleton_msg = self.builder.get_msg_class()
-
-        rospy.Subscriber("skeletons", self.skeleton_msg, self.skeleton_cb)
+            # self.builder_type, skel_topic = self.load_params()
+            self.builder_type, skel_topic = load_params(['builder_type',
+                                                        'skeleton_topic'])
+            # self.builder = load_instance_builder(self.builder_type)
+            self.builder = load_class(self.builder_type)()
+            self.skeleton_msg_type = self.builder.get_msg_class()
+        
+        rospy.Subscriber(skel_topic, self.skeleton_msg_type, self.skeleton_cb)
+        rospy.Subscriber("pose_label", String, self.label_cb)
+        self.label = ''
 
         # Publishers
-        self.publisher = rospy.Publisher('~pose_instance', PoseInstance)
+        self.publisher = rospy.Publisher('pose_instance', PoseInstance)
+
+
+    def load_params(params):
+        ''' loads parameters that will be used by the node '''
+        try:
+            for pname, pvalue in get_parameters(params):
+                yield pvalue
+        except ParamNotFoundError, e:
+            logerr(e)
+            raise
+
+    # def load_params(self):
+    #     ''' loads parameters that will be used by the node '''
+    #     try:
+    #         return (rospy.get_param('~builder_type'),
+    #                 rospy.get_param('skeleton_topic'))
+    #     except:
+    #         logerr('Could not load parameter "~builder_type"')
+    #         raise
        
     def skeleton_cb(self, msg):
-        self.publisher.publish(self.builder.parse_msg(msg))
+        with eh(logger=loginfo, 
+                log_msg='Instance not published.'):
+            self.publisher.publish(self.builder.parse_msg(msg))
+
+    def label_cb(self, label):
+            self.label = label.data
 
     def run():
         rospy.spin()
