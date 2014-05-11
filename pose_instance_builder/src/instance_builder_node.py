@@ -12,30 +12,7 @@ from std_msgs.msg import String
 
 
 DEFAULT_NAME = 'instance_builder_node'
-
-def load_instance_builder(name, module_name='instance_builder'):
-    '''
-        Factory that returns an instance of an InstanceBuilder
-
-        Adapted from this SO Answer: http://stackoverflow.com/a/547867/630598
-        @type name: string
-        @param name: name of the InstanceBuilder class to instantiate
-        @param module_name: (Default: 'instance_builder')
-                            Module name where InstanceBuilder is defined
-        @type module_name: string
-        @return: an instance of module_name.Name.
-        
-        Example:
-        --------
-        >>> import instance_builder
-        >>> builder = load_instance_builder('PiTrackerIBuilder')
-        >>> isinstance(builder, instance_builder.PiTrackerIBuilder)
-        ... True
-
-    '''
-    mod = __import__(module_name, fromlist=[name])
-    klass = getattr(mod, name)
-    return klass
+_NODE_PARAMS = ['builder_type', 'skeleton_topic']
 
 
 def load_params(params):
@@ -60,11 +37,9 @@ class InstanceBuilderNode():
         loginfo("Initializing " + self.node_name + " node...")
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
-                action=self.shutdown):
-            # self.builder_type, skel_topic = self.load_params()
-            self.builder_type, skel_topic = load_params(['builder_type',
-                                                        'skeleton_topic'])
-            # self.builder = load_instance_builder(self.builder_type)
+                # action=self.shutdown,
+                reraise=True):
+            self.builder_type, skel_topic = load_params(_NODE_PARAMS)
             self.builder = load_class(self.builder_type)()
             self.skeleton_msg_type = self.builder.get_msg_class()
         
@@ -76,33 +51,15 @@ class InstanceBuilderNode():
         self.publisher = rospy.Publisher('pose_instance', PoseInstance)
 
 
-    def load_params(params):
-        ''' loads parameters that will be used by the node '''
-        try:
-            for pname, pvalue in get_parameters(params):
-                yield pvalue
-        except ParamNotFoundError, e:
-            logerr(e)
-            raise
-
-    # def load_params(self):
-    #     ''' loads parameters that will be used by the node '''
-    #     try:
-    #         return (rospy.get_param('~builder_type'),
-    #                 rospy.get_param('skeleton_topic'))
-    #     except:
-    #         logerr('Could not load parameter "~builder_type"')
-    #         raise
-       
     def skeleton_cb(self, msg):
         with eh(logger=loginfo, 
                 log_msg='Instance not published.'):
-            self.publisher.publish(self.builder.parse_msg(msg))
+            self.publisher.publish(self.builder.parse_msg(msg, self.label))
 
     def label_cb(self, label):
             self.label = label.data
 
-    def run():
+    def run(self):
         rospy.spin()
     
     def shutdown(self):
