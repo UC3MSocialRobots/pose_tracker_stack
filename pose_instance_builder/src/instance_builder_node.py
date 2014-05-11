@@ -25,8 +25,9 @@ def load_params(params):
         raise
 
 class InstanceBuilderNode():
-    ''' Class that builds a dataset
-
+    ''' Node that processes skeleton messages and publishes them as instances
+        
+        It uses an L{InstanceBuilder} to convert the skeletons to instances.
         @keyword nodename: The name of the node
     '''
     def __init__(self, **kwargs):

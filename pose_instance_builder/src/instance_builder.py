@@ -4,23 +4,21 @@ import roslib; roslib.load_manifest('pose_instance_builder')
 #import rospy
 #from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
-from itertools import (izip, starmap)
+from itertools import (izip, product, starmap)
 from toolz import (concat, cons)
 
 from pi_tracker.msg import Skeleton
 from pose_instance_builder.msg import PoseInstance
+from kinect.msg import NiteSkeletonList
+import kinect.nite_skeleton_msg_utils as nsku
 
-# def parse_label(label):
-#     ''' Parses the entered label.
-#         @return: str(label) or "UNKNOWN" if the label is empty.
-#         @rtype: str'''
-   
-#     return str(label)
 
-def _parse_msg_preconditions(msg, msg_class, label):
+def _check_msg_preconditions(msg, msg_class, label):
     ''' Processes some preconditions for incoming messages '''
+    # Check message type
     if not isinstance(msg, msg_class):
          raise TypeError("Messge not a {}.msg".format(msg_class()))
+    # Check Labels
     if not label:
         raise TypeError('Empty label')
     if not isinstance(label, str):
@@ -69,7 +67,7 @@ class PiTrackerIBuilder():
             @rtype: pose_instance_builder.msg.PoseInstance
             @raise TypeError if preconditions fail
         '''
-        _parse_msg_preconditions(msg, self.get_msg_class(), label)
+        _check_msg_preconditions(msg, self.get_msg_class(), label)
         
         msg_fields = izip(msg.position, msg.orientation, msg.confidence)
         instance = cons(msg.user_id, concat(starmap(self._parse, msg_fields)))
@@ -84,14 +82,33 @@ class PiTrackerIBuilder():
 
 
 class KinectIBuilder():
-    def __init__():
-        pass
+    def __init__(self):
+        self.joints = ['head', 'neck', 'torso',
+                       'left_shoulder', 'left_elbow', 'left_hand',
+                       'right_shoulder', 'right_elbow', 'right_hand',
+                       'left_hip', 'left_knee', 'left_foot',
+                       'right_hip', 'right_knee', 'right_foot']
+
+        self.attribs =  ['pos_x', 'pos_y', 'pos_z',
+                         'orient_x', 'orient_y', 'orient_z', 'orient_w',
+                         'pos_confidence', 'orient_confidence']
+
+        self.cols = map('_'.join, product(self.joints, self.attribs))
     
     def get_msg_class(self):
         return NiteSkeletonList
 
     def parse_msg(self, msg, label):
-        _parse_msg_preconditions(msg, self.get_msg_class(), label)
+        # _check_msg_preconditions(msg, self.get_msg_class(), label)
+        self.check_parse_msg_preconditions(msg, label)
+        skel = msg.skeletons[0]   # only parse the first skeleton
+        instance, _ = nsku.unpack_skeleton_msg(skel)
+        return PoseInstance(columns=self.cols, 
+                            label=str(label),
+                            instance=list(instance))
 
-        pass
+    def check_parse_msg_preconditions(self, msg, label):
+        _check_msg_preconditions(msg, self.get_msg_class(), label)
+        if not msg.skeletons:
+            raise TypeError("Received a message with no skeletons")
 
