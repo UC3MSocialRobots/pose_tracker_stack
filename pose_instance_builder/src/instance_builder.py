@@ -2,7 +2,7 @@
 
 import roslib; roslib.load_manifest('pose_instance_builder')
 #import rospy
-#from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
+# from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
 from itertools import (izip, product, starmap)
 from toolz import (concat, cons)
@@ -99,7 +99,14 @@ class KinectIBuilder():
         return NiteSkeletonList
 
     def parse_msg(self, msg, label):
-        # _check_msg_preconditions(msg, self.get_msg_class(), label)
+        ''' converts a NiteSkeletonList message to a PoseInstance message
+
+            @raise: TypeError if preconditions fail
+            @param msg: the NiteSkeletonList message
+            @type msg: NiteSkeletonList
+            @param label: the label to add to the PoseInstance message
+            @type label: str
+            @return: a PoseInstance message '''
         self.check_parse_msg_preconditions(msg, label)
         skel = msg.skeletons[0]   # only parse the first skeleton
         instance, _ = nsku.unpack_skeleton_msg(skel)
