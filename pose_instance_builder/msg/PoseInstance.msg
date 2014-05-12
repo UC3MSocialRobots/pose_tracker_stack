@@ -1,3 +1,3 @@
 string label
 string[] columns
-float32[] instance
+float64[] instance
