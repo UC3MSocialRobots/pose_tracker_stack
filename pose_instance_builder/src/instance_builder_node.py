@@ -38,13 +38,14 @@ class InstanceBuilderNode():
         loginfo("Initializing " + self.node_name + " node...")
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
-                # action=self.shutdown,
-                reraise=True):
-            self.builder_type, skel_topic = load_params(_NODE_PARAMS)
+                action=self.shutdown, reraise=True):
+            self.builder_type, self.skel_topic = load_params(_NODE_PARAMS)
             self.builder = load_class(self.builder_type)()
             self.skeleton_msg_type = self.builder.get_msg_class()
+            loginfo("Using Instance Builder: {}".format(self.builder_type))
         
-        rospy.Subscriber(skel_topic, self.skeleton_msg_type, self.skeleton_cb)
+        rospy.Subscriber(self.skel_topic, self.skeleton_msg_type, self.skel_cb)
+        loginfo("Subscribed to topic {}".format(self.skel_topic))
         rospy.Subscriber("pose_label", String, self.label_cb)
         self.label = ''
 
@@ -52,10 +53,11 @@ class InstanceBuilderNode():
         self.publisher = rospy.Publisher('pose_instance', PoseInstance)
 
 
-    def skeleton_cb(self, msg):
+    def skel_cb(self, msg):
         with eh(logger=loginfo, 
-                log_msg='Instance not published.'):
-            self.publisher.publish(self.builder.parse_msg(msg, self.label))
+                log_msg='Instance not published. '):
+            pose_instance = self.builder.parse_msg(msg, self.label)
+            self.publisher.publish(pose_instance)
 
     def label_cb(self, label):
             self.label = label.data
