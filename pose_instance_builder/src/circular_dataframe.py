@@ -35,7 +35,6 @@ def append_instance(df, ins, max_dflen=50):
     '''
     if ins.ndim != 1:
         raise ValueError("'ins' is not 1D. Shape: {}".format(ins.shape))
-
-    df_ = _drop_older_rows(df, max_dflen)
     s = pd.Series(ins)
+    df_ = _drop_older_rows(df, max_dflen - 1)
     return df_.append(s, ignore_index=True)

@@ -1,7 +1,7 @@
 PKG = 'pose_instance_builder'
 import roslib; roslib.load_manifest(PKG)
 
-
+# from pytest import mark
 import unittest
 import pandas as pd
 from numpy import linspace
@@ -44,6 +44,7 @@ class TestDropOlderRows(unittest.TestCase):
             maxlen = len(df) + 1
             self.assertTrue(all(cdf._drop_older_rows(df, maxlen) == df))
 
+    # @mark.bench('cdf._drop_older_rows')
     def test_df_len_greater_than_max_len_drops_older_rows_of_df(self):
         for df in (self.df5, self.df10):
             for diff in (1, 3, 5):
@@ -76,6 +77,7 @@ class TestAppendInstances(unittest.TestCase):
         
     def test_returns_new_df_with_appended_instance(self):
         new_df = cdf.append_instance(self.df, self.s, 2)
+        self.assertEqual(len(new_df), 2)
         self.assertTrue(all(new_df.tail(1) == self.s))
 
 

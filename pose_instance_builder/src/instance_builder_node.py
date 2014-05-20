@@ -60,7 +60,7 @@ class InstanceBuilderNode():
             self.publisher.publish(pose_instance)
 
     def label_cb(self, label):
-            self.label = label.data
+        self.label = label.data
 
     def run(self):
         rospy.spin()
