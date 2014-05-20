@@ -8,6 +8,7 @@ import pandas as pd
 from func_utils import error_handler as eh
 from func_utils import load_class
 from param_utils import get_parameters, ParamNotFoundError
+import circular_dataframe as cdf
 
 from pose_instance_builder.msg import PoseInstance
 from std_msgs.msg import String
@@ -26,36 +27,35 @@ def load_params(params):
         logerr(e)
         raise
 
+# def _drop_older_rows(df, max_dflen):
+#     ''' Drops n elements of the header where n = len(df) - max_dflen'''
+#     if max_dflen <= 0:
+#         return df
+#     df_ = df
+#     drop_counts = len(df_) - max_dflen
+#     if drop_counts > 0:
+#         df_ = df.drop(df.head(drop_counts).index)   # Drop drop_counts elems
+#     return df_
 
-def _drop_older_rows(df, dflen):
-    if dflen <= 0:
-        return df
-    df_ = df
-    drop_counts = len(df_) - dflen
-    if drop_counts > 0:
-        df_ = df.drop(df.head(drop_counts).index)   # Drop drop_counts elems
-    return df_
 
+# def append_instance(df, ins, max_dflen=50):
+#     ''' Appends an an instance to the dataset 'df'. 
 
-def append_instance(df, ins, dflen=50):
-    ''' Appends an an instance to the dataset 'df'. 
+#         @param df: dataset at which the instance is added.
+#         @type df: pandas.DataFrame
+#         @param ins: Instance to be added to DataFrame
+#         @type ins: numpy.ndarray (1D)
+#         @param max_dflen: (Default 50) Max lenght of the dataframe
+#                     If len(df) > 1 then drops first elem of df.
+#         @return: a dataframe with the instance added to the end
+#         @rtype: pandas.DataFrame
+#     '''
+#     if ins.ndim != 1:
+#         raise ValueError("'ins' is not 1D. Shape: {}".format(ins.shape))
 
-        @param df: dataset at which the instance is added.
-        @type df: pandas.DataFrame
-        @param ins: Instance to be added to DataFrame
-        @type ins: numpy.ndarray (1D)
-        @param dflen: (Default 50) Max lenght of the dataframe
-                    If len(df) > 1 then drops first elem of df.
-        @return: a dataframe with the instance added to the end
-        @rtype: pandas.DataFrame
-    '''
-    if ins.ndim != 1:
-        raise TypeError("'ins' is not 1D. Shape: {}".format(ins.shape))
-
-    df_ = _drop_older_rows(df, dflen)
-
-    s = pd.Series(ins)
-    return df_.append(s, ignore_index=True)
+#     df_ = _drop_older_rows(df, max_dflen)
+#     s = pd.Series(ins)
+#     return df_.append(s, ignore_index=True)
 
 
 class InstanceAveragerNode():
@@ -82,7 +82,7 @@ class InstanceAveragerNode():
 
     def instance_cb(self, msg):
         instance = pd.Series(msg.instance, index=msg.columns)
-        self.df = append_instance(self.df, instance, self.max_dflen)
+        self.df = cdf.append_instance(self.df, instance, self.max_dflen)
         self.df_averaged = self.averager(self.df)
         pinstance = PoseInstance(instance=list(self.df_averaged.values),
                                  columns=list(self.df_averaged.index))

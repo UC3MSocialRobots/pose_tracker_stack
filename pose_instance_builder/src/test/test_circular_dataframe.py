@@ -5,19 +5,8 @@ import roslib; roslib.load_manifest(PKG)
 import unittest
 import pandas as pd
 from numpy import linspace
-from itertools import (product, repeat)
-from more_itertools import ncycles
-from toolz import (concat, cons)
 
-from instance_builder import (PiTrackerIBuilder, KinectIBuilder, 
-                              _check_msg_preconditions)
-from pi_tracker.msg import Skeleton
-from kinect.msg import (NiteSkeletonList, NiteSkeleton, NiteSkeletonJoint)
-from geometry_msgs.msg import (Vector3, Quaternion)
-from pose_instance_builder.msg import PoseInstance
-import kinect.nite_skeleton_msg_utils as nsku
-
-from instance_averager_node import (append_instance, _drop_older_rows)
+import circular_DataFrame as cdf
 
 def _make_dataframe(nrows, columns):
         ncols = len(columns)
@@ -40,27 +29,28 @@ class TestDropOlderRows(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_zero_or_negative_max_lenghts_do_not_modifies_df(self):
-        for l in (0, -1, -3, -10):
+    def test_zero_or_negative_max_lenghts_return_unmodified_df(self):
+        for maxlength in (0, -1, -3, -10):
             for df in (self.df0, self.df1, self.df3, self.df5):
-                self.assertTrue(all(_drop_older_rows(df, l) == df))
+                self.assertTrue(all(cdf._drop_older_rows(df, maxlength) == df))
 
-    def test_df_len_equals_max_len_do_not_modifies_df(self):
+    def test_df_len_equals_max_len_return_unmodified_df(self):
         for df in (self.df0, self.df1, self.df3, self.df5):
             maxlen = len(df)
-            self.assertTrue(all(_drop_older_rows(df, maxlen) == df))
+            self.assertTrue(all(cdf._drop_older_rows(df, maxlen) == df))
 
-    def test_df_len_less_than_max_len_do_not_modifies_df(self):
+    def test_df_len_less_than_max_len_return_unmodified_df(self):
         for df in (self.df0, self.df1, self.df3, self.df5):
             maxlen = len(df) + 1
-            self.assertTrue(all(_drop_older_rows(df, maxlen) == df))
+            self.assertTrue(all(cdf._drop_older_rows(df, maxlen) == df))
 
     def test_df_len_greater_than_max_len_drops_older_rows_of_df(self):
         for df in (self.df5, self.df10):
             for diff in (1, 3, 5):
                 maxlen = len(df) - diff 
-                self.assertTrue(all(_drop_older_rows(df, maxlen) 
-                                    == df.tail(maxlen)))
+                new_df = cdf._drop_older_rows(df, maxlen)
+                self.assertTrue(len(new_df) >= maxlen)
+                self.assertTrue(all(new_df == df.tail(maxlen)))
             
 class TestAppendInstances(unittest.TestCase):
     """Tests"""
@@ -75,12 +65,18 @@ class TestAppendInstances(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_append_instance_raisesTypeError_if_instance_is_not_1d(self):
-        with self.assertRaises(TypeError):
-            append_instance(self.df, self.df)
+    def test_raisesValueError_if_instance_is_not_1d(self):
+        with self.assertRaises(ValueError):
+            cdf.append_instance(self.df, self.df)
 
-    def test_append_instance_returns_new_df_with_appended_instance(self):
-        pass
+    def test_drops_older_instances_if_df_len_greater_than_maxlen(self):
+        new_df = cdf.append_instance(self.df, self.s, 2)
+        self.assertEqual(len(new_df), 2)
+        self.assertTrue(all(new_df.ix[0] == self.df.ix[1]))
+        
+    def test_returns_new_df_with_appended_instance(self):
+        new_df = cdf.append_instance(self.df, self.s, 2)
+        self.assertTrue(all(new_df.tail(1) == self.s))
 
 
 if __name__ == '__main__':
