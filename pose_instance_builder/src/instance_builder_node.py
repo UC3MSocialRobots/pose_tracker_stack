@@ -11,7 +11,7 @@ from pose_instance_builder.msg import PoseInstance
 from std_msgs.msg import String
 
 
-DEFAULT_NAME = 'instance_builder_node'
+_DEFAULT_NAME = 'instance_builder_node'
 _NODE_PARAMS = ['builder_type', 'skeleton_topic']
 
 
@@ -31,7 +31,7 @@ class InstanceBuilderNode():
         @keyword nodename: The name of the node
     '''
     def __init__(self, **kwargs):
-        name = kwargs.get('node_name', DEFAULT_NAME)
+        name = kwargs.get('node_name', _DEFAULT_NAME)
         rospy.init_node(name)
         self.node_name = rospy.get_name()
         rospy.on_shutdown(self.shutdown)
