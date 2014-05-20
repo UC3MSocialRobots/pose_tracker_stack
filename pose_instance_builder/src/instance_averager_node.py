@@ -27,37 +27,6 @@ def load_params(params):
         logerr(e)
         raise
 
-# def _drop_older_rows(df, max_dflen):
-#     ''' Drops n elements of the header where n = len(df) - max_dflen'''
-#     if max_dflen <= 0:
-#         return df
-#     df_ = df
-#     drop_counts = len(df_) - max_dflen
-#     if drop_counts > 0:
-#         df_ = df.drop(df.head(drop_counts).index)   # Drop drop_counts elems
-#     return df_
-
-
-# def append_instance(df, ins, max_dflen=50):
-#     ''' Appends an an instance to the dataset 'df'. 
-
-#         @param df: dataset at which the instance is added.
-#         @type df: pandas.DataFrame
-#         @param ins: Instance to be added to DataFrame
-#         @type ins: numpy.ndarray (1D)
-#         @param max_dflen: (Default 50) Max lenght of the dataframe
-#                     If len(df) > 1 then drops first elem of df.
-#         @return: a dataframe with the instance added to the end
-#         @rtype: pandas.DataFrame
-#     '''
-#     if ins.ndim != 1:
-#         raise ValueError("'ins' is not 1D. Shape: {}".format(ins.shape))
-
-#     df_ = _drop_older_rows(df, max_dflen)
-#     s = pd.Series(ins)
-#     return df_.append(s, ignore_index=True)
-
-
 class InstanceAveragerNode():
     ''' Node that processes skeleton messages and publishes them as instances
         

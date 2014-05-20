@@ -6,7 +6,7 @@ import unittest
 import pandas as pd
 from numpy import linspace
 
-import circular_DataFrame as cdf
+import circular_dataframe as cdf
 
 def _make_dataframe(nrows, columns):
         ncols = len(columns)

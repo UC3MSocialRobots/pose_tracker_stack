@@ -30,4 +30,5 @@ rosbuild_genmsg()
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_pyunit(src/test/test_instance_builder.py)
+rosbuild_add_pyunit(src/test/test_circular_dataframe.py)
 rosbuild_add_rostest(test/instance_builder_node.test)
