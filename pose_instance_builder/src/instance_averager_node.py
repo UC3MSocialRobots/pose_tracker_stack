@@ -66,7 +66,7 @@ class InstanceAveragerNode():
         rospy.Subscriber('pose_instance', PoseInstance, self.instance_cb)
         self.publisher = rospy.Publisher('averaged_pose', PoseInstance)
         self.df = pd.DataFrame()
-        self.df_averaged = pd.DataFrame()
+        self.df_averaged = pd.Series()
 
     def instance_cb(self, msg):
         instance = pd.Series(msg.instance, index=msg.columns)
