@@ -24,6 +24,7 @@ def load_params(params):
         logerr(e)
         raise
 
+
 class InstanceBuilderNode():
     ''' Node that processes skeleton messages and publishes them as instances
         
