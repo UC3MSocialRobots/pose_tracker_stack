@@ -135,8 +135,14 @@ class TestSkeletonQueue(unittest.TestCase):
 
     # @unittest.skip("Skpping this Test")
     @patch.object(skq.SkeletonQueue, '_pop_from_queue')
+    def test_prepare_chunk_returns_None_when_queue_is_empty(self, mock_pop):
+        self.skq.skeleton_queue.clear()
+        self.assertEqual(list(self.skq._prepare_chunk()), [])
+
+    # @unittest.skip("Skpping this Test")
+    @patch.object(skq.SkeletonQueue, '_pop_from_queue')
     def test_prepare_chunk(self, mock_pop):
-        # mock_pop.side_effect = lambda x: xrange(x)
+        mock_pop.side_effect = lambda x: xrange(x)
 
         self.skq.skeleton_queue.clear()
         self.assertEqual(list(self.skq._prepare_chunk()), [],
