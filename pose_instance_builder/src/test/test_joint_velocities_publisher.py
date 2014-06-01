@@ -40,10 +40,6 @@ class TestJointVelocitiesPublisher(unittest.TestCase):
         # del(self.node)
         pass
 
-    def test_joint_velocities_publihser_advertises_joint_velocities_topic(self):
-        rospy.sleep(0.3)  # Wait node is loaded
-        self.assertTrue(any(self._search_topic_name('joint_velocities')))
-
     # @unittest.skip('Skipped')
     def test_publishes_velocities_when_receives_instances(self):
         # Pre-computed velocities
