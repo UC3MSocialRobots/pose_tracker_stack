@@ -4,7 +4,7 @@ import roslib; roslib.load_manifest('pose_instance_builder')
 #import rospy
 # from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
-from itertools import (izip, product, starmap)
+from itertools import (chain, izip, product, starmap)
 from toolz import (concat, cons)
 
 from pi_tracker.msg import Skeleton
@@ -88,12 +88,12 @@ class KinectIBuilder():
                        'right_shoulder', 'right_elbow', 'right_hand',
                        'left_hip', 'left_knee', 'left_foot',
                        'right_hip', 'right_knee', 'right_foot']
-
         self.attribs =  ['pos_x', 'pos_y', 'pos_z',
                          'orient_x', 'orient_y', 'orient_z', 'orient_w',
                          'pos_confidence', 'orient_confidence']
-
+        self.header = ['user_id', 'stamp']
         self.cols = map('_'.join, product(self.joints, self.attribs))
+        self.cols = list(chain(self.header, self.cols))
     
     def get_msg_class(self):
         return NiteSkeletonList
