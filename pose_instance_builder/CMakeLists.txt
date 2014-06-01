@@ -31,5 +31,6 @@ rosbuild_genmsg()
 
 rosbuild_add_pyunit(src/test/test_instance_builder.py)
 rosbuild_add_pyunit(src/test/test_circular_dataframe.py)
+rosbuild_add_pyunit(src/test/test_calc_joint_velocities.py)
 rosbuild_add_rostest(test/instance_builder_node.test)
 rosbuild_add_rostest(test/joint_velocities_publisher.test)
