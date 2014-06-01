@@ -67,9 +67,6 @@ class PoseDatasetIO(object):
         self.dataset_columns = kwargs['columns']
         self._mode = kwargs.get('mode', 'a')
 
-        # print self.dataset
-        # print str(self.dataset_columns)
-
         if not isinstance(self.dataset, str):
             raise TypeError("dataset must be a string")
         if not hasattr(self.dataset_columns, '__iter__'):
