@@ -24,6 +24,14 @@ def load_params(params):
         raise
 
 
+def calc_velocities(df):
+    ''' Function that calculates velocities of an 
+        input Dataframe with PoseInstances '''
+    if not all(df.shape):
+        raise ValueError("DataFrame is empty")
+    return (df.iloc[-1].values - df.iloc[0].values) / len(df)
+
+
 class JointVelocitiesPublisher():
     ''' Node that calculates joint velocities from L{PoseInstance} messages
         
@@ -43,11 +51,11 @@ class JointVelocitiesPublisher():
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
                 action=self.shutdown, reraise=True):
-                self.df_length = load_params(['num_instances', ])
+                self.df_length = load_params(['num_instances']).next()
 
         # Publishers and Subscribers
-        rospy.Subscriber('pose_instance', PoseInstance, self.instance_cb)
-        self.publisher = rospy.Publisher('joint_velocities', JointVelocities)
+        rospy.Subscriber('/pose_instance', PoseInstance, self.instance_cb)
+        self.publisher = rospy.Publisher('/joint_velocities', JointVelocities)
         self.df = pd.DataFrame()
 
     def instance_cb(self, msg):
@@ -56,17 +64,11 @@ class JointVelocitiesPublisher():
         
         with eh(logger=loginfo, errors=ValueError,
                 log_msg='Empty DataFrame. Velocities not published'):
-            vels = self.calc_velocities(self.df)
+            vels = calc_velocities(self.df)
             velocities = JointVelocities(velocities=vels.tolist(),
-                                         columns=list(self.df.columns))
+                                         columns=self.df.columns.tolist())
             self.publisher.publish(velocities)
         
-
-    def calc_velocities(self, df):
-        if not all(df.shape):
-            raise ValueError("DataFrame is empty")
-        return (df.iloc[-1].values - df.iloc[0].values) / len(df)
-
     def run(self):
         rospy.spin()
     
