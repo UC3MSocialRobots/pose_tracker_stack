@@ -9,7 +9,7 @@ from func_utils import error_handler as eh
 from param_utils import get_parameters, ParamNotFoundError
 import circular_dataframe as cdf
 
-from pose_instance_builder.msg import (PoseInstance, JointVelocities)
+from pose_msgs.msg import (PoseInstance, JointVelocities)
 
 _DEFAULT_NAME = 'joint_velocities_publisher'
 

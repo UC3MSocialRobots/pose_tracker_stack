@@ -8,7 +8,7 @@ from itertools import (chain, izip, product, starmap)
 from toolz import (concat, cons)
 
 from pi_tracker.msg import Skeleton
-from pose_instance_builder.msg import PoseInstance
+from pose_msgs.msg import PoseInstance
 from kinect.msg import NiteSkeletonList
 import kinect.nite_skeleton_msg_utils as nsku
 

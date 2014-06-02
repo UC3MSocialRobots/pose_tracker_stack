@@ -7,7 +7,7 @@ from func_utils import error_handler as eh
 from func_utils import load_class
 from param_utils import get_parameters, ParamNotFoundError
 
-from pose_instance_builder.msg import PoseInstance
+from pose_msgs.msg import PoseInstance
 from std_msgs.msg import String
 
 

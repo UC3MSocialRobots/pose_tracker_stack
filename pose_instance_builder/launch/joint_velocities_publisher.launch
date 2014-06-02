@@ -23,11 +23,12 @@
               <param name="skeleton_topic" 
                      value="/$(arg robot)/skeletons" type="str" />
         </node>
+
         <node name="joint_velocities_publisher"
               pkg="pose_instance_builder"
               type="joint_velocities_publisher.py">
-        <param name="num_instances" value="30" type="int" />
-  </node>
+              <param name="num_instances" value="30" type="int" />
+        </node>
     </group>
     
 </launch>

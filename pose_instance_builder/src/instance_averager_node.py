@@ -24,9 +24,9 @@ def __gmean(df):
     return pd.Series(geometric_mean(df), index=df.columns)
 
 
-AVERAGERS = {'mean': pd.DataFrame.mean,
-             'median': pd.DataFrame.median,
-             'gmean': __gmean}
+METHODS = {'mean': pd.DataFrame.mean,
+           'median': pd.DataFrame.median,
+           'gmean': __gmean}
 
 
 def load_params(params):
@@ -59,7 +59,7 @@ class InstanceAveragerNode():
                 action=self.shutdown, reraise=True):
                 self.method, self.dflen = load_params('averager_method', 
                                                       'dataframe_length')
-                self.averager = AVERAGERS.get(self.method, AVERAGERS['mean'])
+                self.averager = METHODS.get(self.method, METHODS['mean'])
 
 
         # Publishers and Subscribers

@@ -8,14 +8,23 @@
   <license>GPLv3</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/pose_instance_builder</url>
-  <depend package="kinect"/>
-  <depend package="pi_tracker"/>
-  <depend package="pose_labeler"/>
+  
   <depend package="rospy"/>
-  <depend package="rospy_utils"/>
   <depend package="rosunit"/>
   <depend package="rostest"/>
+  
+  <depend package="pose_msgs"/>
+  <depend package="pose_labeler"/>
+  <depend package="rospy_utils"/>
+  
+  <!-- builders -->
+  <depend package="kinect"/>
+  <depend package="pi_tracker"/>
 
+  <!-- External dependencies to python packages -->
+  <rosdep name="PyTables"/>
+  <rosdep name="numpy"/>
+  <rosdep name="pandas"/>
   <rosdep name="toolz"/>
   <rosdep name="more-itertools"/>
   <rosdep name="mock"/>

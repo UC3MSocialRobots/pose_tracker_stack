@@ -10,16 +10,15 @@ import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
 # import itertools as it
+import unittest
 import numpy as np
 import pandas as pd
-from threading import Thread    # To run node in a separate thread
 
-from joint_velocities_publisher import JointVelocitiesPublisher
-from pose_instance_builder.msg import (PoseInstance, JointVelocities)
+from pose_msgs.msg import (PoseInstance, JointVelocities)
 
-import unittest
+
 # import numpy.testing 
-from numpy.testing import assert_array_almost_equal as assert_arrAlmostEQ
+# from numpy.testing import assert_array_almost_equal as assert_arrAlmostEQ
 
 class TestJointVelocitiesPublisher(unittest.TestCase):
     """Tests"""
@@ -44,9 +43,9 @@ class TestJointVelocitiesPublisher(unittest.TestCase):
     def test_publishes_velocities_when_receives_instances(self):
         # Pre-computed velocities
         expected_velocities = {1: np.array([0]*5),
-                                    2: np.array([2.5]*5),
-                                    3: np.array([3.33333333]*5),
-                                    4: np.array([3.75]*5)}
+                               2: np.array([2.5]*5),
+                               3: np.array([3.33333333]*5),
+                               4: np.array([3.75]*5)}
         expected_velocities = pd.DataFrame(expected_velocities,
                                                 columns=list('ABCDE'))
         

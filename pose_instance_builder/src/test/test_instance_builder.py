@@ -10,11 +10,13 @@ from toolz import (concat, cons)
 
 from instance_builder import (PiTrackerIBuilder, KinectIBuilder, 
                               _check_msg_preconditions)
+import kinect.nite_skeleton_msg_utils as nsku
 from pi_tracker.msg import Skeleton
 from kinect.msg import (NiteSkeletonList, NiteSkeleton, NiteSkeletonJoint)
+from pose_msgs.msg import PoseInstance
 from geometry_msgs.msg import (Vector3, Quaternion)
-from pose_instance_builder.msg import PoseInstance
-import kinect.nite_skeleton_msg_utils as nsku
+
+
 
 class TestPreconditions(unittest.TestCase):
     """Tests"""
@@ -30,7 +32,7 @@ class TestPreconditions(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_check_msg_preconditions_raises_TypeError_with_bad_msgs(self):
+    def test_raises_TypeError_with_bad_msgs(self):
         label = 'lalala'
         msgs = [None, [], 1234]
         types = [self.pi_tracker_msg_type, self.nite_skel_msg_type]
@@ -48,7 +50,7 @@ class TestPreconditions(unittest.TestCase):
                 _check_msg_preconditions(msg, type_, label)
 
 
-    def test_check_preconditions_raises_with_bad_labels(self):
+    def test_raises_TypeError_with_bad_labels(self):
         bad_labels = ['UNKNOWN', None, [], 123]
         for bl in bad_labels:
             with self.assertRaises(TypeError):
@@ -63,6 +65,26 @@ class TestPreconditions(unittest.TestCase):
             _check_msg_preconditions(self.nite_skel_msg, NiteSkeletonList, label)
         except:
             self.fail()
+
+class TestDummyInstanceBuilder(unittest.TestCase):
+    """Tests"""
+    def __init__(self, *args):
+        super(TestDummyInstanceBuilder, self).__init__(*args)
+
+    def setUp(self):
+        self.builder = DummyInstanceBuilder()
+        # self.skel_list = NiteSkeletonList()
+        # self.skel = NiteSkeleton()
+
+    def make_instance(self):
+        pass
+        
+    def tearDown(self):
+        pass
+
+    def test_parse_msg(self):
+        # self.fail("Not implemented")
+        pass
 
 
 class TestPiTrackerIBuiler(unittest.TestCase):

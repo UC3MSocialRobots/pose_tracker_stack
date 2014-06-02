@@ -36,6 +36,9 @@ class TestInstanceBuilderNode(unittest.TestCase):
         self.assertEqual(self.p.value, node.builder_type)
         self.assertTrue(isinstance(node.builder, _BUILDERS[self.p.value]))
 
+    # def test_node_inserts_label_to_instances(self):
+    #     self.fail("ToDo: 1) Write test. 2) Implement functionality")
+
     # def test_cb_returns_appropriate_instance(self):
     #     pass
     
