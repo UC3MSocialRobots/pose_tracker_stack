@@ -13,7 +13,7 @@ import pose_learner as pl
 import kinect.nite_skeleton_msg_utils as nsku
 
 # Import message types
-from pose_tracker.msg import PoseEstimated
+from pose_msgs.msg import PoseEstimated
 from pose_tracker.srv import DatasetInfo
 import kinect.msg as kin
 

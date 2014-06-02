@@ -9,18 +9,17 @@
   <url>http://ros.org/wiki/pose_tracker</url>
   
   <depend package="rospy"/>
-  <depend package="pose_labeler"/>
-  <depend package="kinect"/>
-  <depend package="rospy_utils"/>
-  <depend package="std_msgs"/>
-
   <depend package="rosunit"/>
   <depend package="rostest"/>
-<!--  
-  <depend package="roscpp"/>
--->
+  <depend package="std_msgs"/>
+  <depend package="pose_msgs"/>
+  <depend package="pose_labeler"/>
+  <!-- <depend package="pose_instance_builder"/> -->
+  <depend package="kinect"/>
+  <depend package="rospy_utils"/>
+  <!-- <depend package="roscpp"/> -->
 
-<!-- External dependencies to python packages -->
+  <!-- External dependencies to python packages -->
   <rosdep name="numpy"/>
   <rosdep name="pandas"/>
   <rosdep name="scikit-learn"/>
