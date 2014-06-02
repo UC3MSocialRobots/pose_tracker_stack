@@ -23,7 +23,7 @@ class PoseLabeler():
 
         # Subscribe to the asr_recognition_results topic.
         rospy.Subscriber("recognition_results", asrmsg.recog_results,
-                                       self.results_callback)
+                        self.results_callback)
         # Publishers
         self.label_pub = rospy.Publisher('pose_label', String)
         self.command_pub = rospy.Publisher('pose_command', String)
@@ -36,7 +36,7 @@ class PoseLabeler():
             # self.min_confidence = rospy.get_param(rospy.get_name() + 'min_confidence', 0.5)
             self.min_confidence = rospy.get_param('~min_confidence', 0.5)
         except KeyError:
-            rospy.logerr("Error when loading parameters!")
+            rospy.logfatal("PoseLabeler: Error when loading parameters!")
             rospy.signal_shutdown("node " + rospy.get_name() \
                 + " shot down because parameters were not found")
 
@@ -62,6 +62,7 @@ class PoseLabeler():
             rospy.logwarn(  "Confidence is too low for label: %s (%f)", 
                             label, confidence)
             return
+        
         if label not in self.label_publishers:
             for pub in set(self.label_publishers.values()):
                 pub.publish('UNKNOWN')  # Publish 'UNKNOWN' in all publishers

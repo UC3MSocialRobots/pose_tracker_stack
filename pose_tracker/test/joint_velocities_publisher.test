@@ -1,12 +1,14 @@
 <launch>
   <test test-name="test_joint_velocities_publisher"
-        pkg="pose_instance_builder"
+        pkg="pose_tracker"
         type="test_joint_velocities_publisher.py"
         time-limit="20.0">
         <param name="num_instances" value="30" type="int" />
   </test>
+
+  <!-- Nodes needed by tests -->
   <node name="joint_velocities_publisher"
-        pkg="pose_instance_builder"
+        pkg="pose_tracker"
         type="joint_velocities_publisher.py">
         <param name="num_instances" value="30" type="int" />
   </node>

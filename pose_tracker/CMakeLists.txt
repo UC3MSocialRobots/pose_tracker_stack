@@ -25,9 +25,13 @@ rosbuild_gensrv()
 
 # rosbuild_add_executable(skeleton_frame_transformer src/skeleton_frame_transformer.cpp)
 
-rosbuild_add_pyunit(src/test/test_PoseDatasetIO_writer.py)
-rosbuild_add_pyunit(src/test/test_PoseDatasetIO_reader.py)
-rosbuild_add_pyunit(src/test/test_SkeletonQueue.py)
-rosbuild_add_pyunit(src/test/test_PoseDatasetIO_dateParser.py)
-rosbuild_add_pyunit(src/test/test_only_in_states.py)
+rosbuild_add_pyunit(src/test/pose_tracker/test_PoseDatasetIO_writer.py)
+rosbuild_add_pyunit(src/test/pose_tracker/test_PoseDatasetIO_reader.py)
+rosbuild_add_pyunit(src/test/pose_tracker/test_SkeletonQueue.py)
+rosbuild_add_pyunit(src/test/pose_tracker/test_PoseDatasetIO_dateParser.py)
+rosbuild_add_pyunit(src/test/pose_tracker/test_only_in_states.py)
 rosbuild_add_rostest(test/pose_dataset_builder.test)
+
+rosbuild_add_pyunit(src/test/pose_detector/test_circular_dataframe.py)
+rosbuild_add_pyunit(src/test/pose_detector/test_calc_joint_velocities.py)
+rosbuild_add_rostest(test/joint_velocities_publisher.test)
