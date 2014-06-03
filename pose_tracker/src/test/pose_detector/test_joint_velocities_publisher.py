@@ -4,7 +4,7 @@
 @date: 2014-05
 '''
 from __future__ import division
-PKG = 'pose_instance_builder'
+PKG = 'pose_tracker'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)

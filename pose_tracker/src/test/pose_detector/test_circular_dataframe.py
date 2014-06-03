@@ -1,4 +1,4 @@
-PKG = 'pose_instance_builder'
+PKG = 'pose_tracker'
 import roslib; roslib.load_manifest(PKG)
 
 # from pytest import mark

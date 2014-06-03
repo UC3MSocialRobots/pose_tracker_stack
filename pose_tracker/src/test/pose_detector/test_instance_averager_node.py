@@ -2,7 +2,7 @@
 @author: Victor Gonzalez Pacheco
 @date: 2014-05
 '''
-PKG = 'pose_instance_builder'
+PKG = 'pose_tracker'
 import roslib; roslib.load_manifest(PKG)
 
 import rospy

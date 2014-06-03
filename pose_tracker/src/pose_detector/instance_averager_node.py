@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('pose_instance_builder')
+import roslib; roslib.load_manifest('pose_tracker')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
