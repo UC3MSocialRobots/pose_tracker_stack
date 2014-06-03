@@ -34,4 +34,6 @@ rosbuild_add_rostest(test/pose_dataset_builder.test)
 
 rosbuild_add_pyunit(src/test/pose_detector/test_circular_dataframe.py)
 rosbuild_add_pyunit(src/test/pose_detector/test_calc_joint_velocities.py)
+rosbuild_add_pyunit(src/test/pose_detector/test_pose_detectors.py)
 rosbuild_add_rostest(test/joint_velocities_publisher.test)
+rosbuild_add_rostest(test/pose_detector_node.test)
