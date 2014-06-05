@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('pose_tracker')
+import roslib
+roslib.load_manifest('pose_tracker')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
@@ -19,11 +20,12 @@ _DEFAULT_NAME = 'instance_averager_node'
 _NODE_PARAMS = ['builder_type', 'skeleton_topic']
 
 
-class DatasetNotFullError(Exception): pass
+class DatasetNotFullError(Exception):
+    pass
 
 
 def is_dataset_full(expected_len, dataset):
-    if len(dataset != expected_len):
+    if len(dataset) != expected_len:
         raise DatasetNotFullError()
 
 
@@ -36,13 +38,19 @@ def do_if_predicate(predicate, action, action_args=[], action_kwargs={}):
 def is_still(threshold, df):
     ''' Returns True if all joints in df are below threshold. 
         Otherwise: returns False '''
-    return all(lt(threshold, df))
+    # return all(lt(threshold, df))
+    # return all(df.lt(threshold))
+    # Above alternatives seem to be buggy.
+    # I should post a question on StackOverflow
+    return df.lt(threshold).values.all()
 
 
 def is_moving(threshold, df):
     ''' Returns True if all joints in df are equal or above threshold. 
         Otherwise: returns False '''
-    return all(gt(threshold, df))
+    # return all(gt(threshold, df))
+    # return all(df.gt(threshold))
+    return df.gt(threshold).values.all()
 
 
 # def next_caller(iterator):
@@ -50,9 +58,11 @@ def is_moving(threshold, df):
 
 
 class PoseDetectorNode():
+
     ''' Node that receives L{JointVelocities} and evaluates them to 
         publish wheter the user is moving or not.
     '''
+
     def __init__(self, **kwargs):
         name = kwargs.get('node_name', _DEFAULT_NAME)
         rospy.init_node(name)
@@ -62,19 +72,19 @@ class PoseDetectorNode():
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
                 action=rospy.signal_shutdown, reraise=True):
-                self.dflen, self.threshold = load_params('dataframe_length', 
+                self.dflen, self.threshold = load_params('dataframe_length',
                                                          'movement_threshold')
 
         # Publishers and Subscribers
-        rospy.Subscriber('/joint_velocities', JointVelocities, self.velocities_cb)
+        rospy.Subscriber(
+            '/joint_velocities', JointVelocities, self.velocities_cb)
         rospy.Subscriber('/pose_instance', PoseInstance, self.instance_cb)
         self.publisher = rospy.Publisher('/user_pose', PoseInstance)
-        
+
         self.velocities = pd.DataFrame()
         self.pose = pd.Series()
         self.detectors = it.cycle([is_still, is_moving])
         self.current_detector = self.detectors.next()
-        
 
     def velocities_cb(self, msg):
         new_instance = pd.Series(msg.velocities, index=msg.columns)
@@ -87,11 +97,11 @@ class PoseDetectorNode():
                 self.publisher.publish(self.pose_instance)
         except DatasetNotFullError:
             pass
-    
+
     def instance_cb(self, msg):
         ''' Stores the latest received L{PoseInstance} message '''
         self.pose_instance = msg
-                
+
     def change_state(self, detectors):
         ''' Updates current detector and flushes the velocities dataset '''
         self.current_detector = self.detectors.next()
@@ -99,11 +109,11 @@ class PoseDetectorNode():
 
     def run(self):
         rospy.spin()
-    
+
     def shutdown(self):
-        ''' Closes the node ''' 
+        ''' Closes the node '''
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
-        
+
 
 if __name__ == '__main__':
     try:

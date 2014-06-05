@@ -8,7 +8,7 @@ from scipy.stats import gmean as geometric_mean
 
 from func_utils import error_handler as eh
 from func_utils import load_class
-from param_utils import load_params
+from param_utils import get_parameters, ParamNotFoundError
 import circular_dataframe as cdf
 
 from pose_instance_builder.msg import PoseInstance
