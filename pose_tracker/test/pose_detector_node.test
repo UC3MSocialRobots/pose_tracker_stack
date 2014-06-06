@@ -6,6 +6,7 @@
         <param name="dataframe_length" value="30" type="int" />
         <param name="movement_threshold" value="1.5" type="double" /> <!-- m/s -->
   </test>
+  <!-- TODO: Lanzar el test que carga el nodo con un remap a otro namespace -->
 
   <!-- Nodes needed by tests -->
   <!-- <node name="joint_velocities_publisher"

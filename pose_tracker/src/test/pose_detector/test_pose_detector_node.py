@@ -17,7 +17,7 @@ import pandas as pd
 
 from pose_msgs.msg import (PoseInstance, JointVelocities)
 from pose_detector.pose_detector_node import (DatasetNotFullError,
-                                              PoseDetectorNode,
+                                              PoseDetectorNode, Detector,
                                               is_dataset_full,
                                               is_still, is_moving)
 
@@ -28,12 +28,16 @@ class TestPoseDetectorNode(unittest.TestCase):
 
     def __init__(self, *args):
         super(TestPoseDetectorNode, self).__init__(*args)
-        name = 'test_pose_detector'
+        # name = 'test_pose_detector'
         # rospy.init_node(name)
         self.node = PoseDetectorNode()
 
     def setUp(self):
-        pass
+        dstill = Detector(is_still, self.node.__pose_publisher,
+                          self.node.pose_instance)
+        dmoving = Detector(is_moving, self.node.__velo_publisher,
+                           self.node.velocities)
+        self.test_detectors = [dmoving, dstill, dmoving, dstill]
 
     def tearDown(self):
         pass
@@ -42,17 +46,17 @@ class TestPoseDetectorNode(unittest.TestCase):
         data = np.linspace(1, 10, 10).reshape(2, 5)
         self.node.velocities = pd.DataFrame(data)
 
-    def test_change_state_selects_proper_detector_in_each_change(self):
+    def test_change_detector_selects_proper_detector_in_each_change(self):
         ''' Tests if detector changes properly.'''
-        for expected_detector in [is_moving, is_still, is_moving, is_still]:
+        for expected_detector in self.test_detectors:
             self.__fill_velocities_dataframe()
-            self.node.change_state(self.node.detectors)
+            self.node.change_detector(self.node.detectors)
             self.assertEqual(expected_detector, self.node.current_detector)
 
-    def test_change_state_flushes_velocities_dataframe(self):
-        for expected_detector in [is_moving, is_still, is_moving, is_still]:
+    def test_change_detector_flushes_velocities_dataframe(self):
+        for expected_detector in self.test_detectors:
             self.__fill_velocities_dataframe()
-            self.node.change_state(self.node.detectors)
+            self.node.change_detector(self.node.detectors)
             self.assertEqual(0, len(self.node.velocities))
 
     @unittest.skip('TODO')
@@ -65,6 +69,10 @@ class TestPoseDetectorNode(unittest.TestCase):
 
     @unittest.skip('TODO')
     def test_velocities_cb_publishes_velos_when_the_user_starts_moving(self):
+        self.fail('TODO')
+
+    @unittest.skip('TODO')
+    def test_Node_switches_detector_when_user_starts_stops_moving(self):
         self.fail('TODO')
 
 

@@ -4,7 +4,8 @@ roslib.load_manifest('pose_tracker')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
-from operator import (gt, lt)
+# from operator import (gt, lt)
+from collections import namedtuple
 import itertools as it
 import pandas as pd
 
@@ -13,7 +14,6 @@ from param_utils import load_params
 import circular_dataframe as cdf
 
 from pose_msgs.msg import (PoseInstance, JointVelocities)
-from std_msgs.msg import String
 
 
 class DatasetNotFullError(Exception):
@@ -42,11 +42,25 @@ def is_moving(threshold, df):
 _DEFAULT_NAME = 'instance_averager_node'
 _NODE_PARAMS = ['dataframe_length', 'movement_threshold']
 
+Detector = namedtuple('Detector', ['detector', 'publisher', 'msg'])
+
 
 class PoseDetectorNode():
 
     ''' Node that receives L{JointVelocities} and evaluates them to
         publish wheter the user is moving or not.
+
+        Publishes a L{PoseInstance} to /user_pose if the user L{is_still}
+        Publishes a L{JointVelocities} to /user_moving if the user L{is_moving}
+        Note that it only publishes if there has been a change
+
+        Example:
+        --------
+            1. User is moving
+            2. User stops. --> publication to /user_pose
+            3. User keeps stoped.
+            4. User starts moving --> publication to /user_moving
+            5. User stops again --> publication to /user_pose
     '''
 
     def __init__(self, **kwargs):
@@ -58,18 +72,30 @@ class PoseDetectorNode():
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
                 reraise=True):
-                self.dflen, self.threshold = load_params(_NODE_PARAMS)
+            self.dflen, self.threshold = load_params(_NODE_PARAMS)
 
-        # Publishers and Subscribers
+        ### Publishers and Subscribers
         rospy.Subscriber(
             '/joint_velocities', JointVelocities, self.velocities_cb)
         rospy.Subscriber('/pose_instance', PoseInstance, self.instance_cb)
-        self.publisher = rospy.Publisher('/user_pose', PoseInstance)
+        self.__pose_pub = rospy.Publisher('/user_pose', PoseInstance)
+        self.__moving_pub = rospy.Publisher('/user_moving', JointVelocities)
 
         self.velocities = pd.DataFrame()
-        self.pose = pd.Series()
-        self.detectors = it.cycle([is_still, is_moving])
+        self.pose_instance = PoseInstance()
+
+        # Detectors
+        _still_detector = \
+            Detector(is_still, self.__pose_publisher, self.pose_instance)
+        _moving_detector = \
+            Detector(is_moving, self.__velo_publisher, self.velocities)
+
+        self.detectors = it.cycle([_still_detector, _moving_detector])
         self.current_detector = self.detectors.next()
+
+    def instance_cb(self, msg):
+        ''' Stores the latest received L{PoseInstance} message '''
+        self.pose_instance = msg
 
     def velocities_cb(self, msg):
         new_instance = pd.Series(msg.velocities, index=msg.columns)
@@ -79,15 +105,22 @@ class PoseDetectorNode():
         except DatasetNotFullError:
             return
         if self.current_detector(self.threshold, self.velocities):
-            self.change_state()
-            # TODO: ENSURE THAT I PUBLISH TO  DIFFERENT TOPICS
-            self.publisher.publish(self.pose_instance)
+            self.change_detector()
+            self.current_detector.publish(self.current_detector.msg)
 
-    def instance_cb(self, msg):
-        ''' Stores the latest received L{PoseInstance} message '''
-        self.pose_instance = msg
+    def __pose_publisher(self, pose_instance):
+        ''' Helper method that publishes the las velocities instance from
+            the L{PoseDetectorNode.velocities} DataFrame '''
+        self.__pose_pub.publish(pose_instance)
 
-    def change_state(self, detectors):
+    def __velo_publisher(self, velocities):
+        ''' Helper method that publishes the las velocities instance from
+            the L{PoseDetectorNode.velocities} DataFrame '''
+        msg = JointVelocities(columns=velocities.columns,
+                              velocities=velocities.iloc[-1].values)
+        self.__moving_pub.publish(msg)
+
+    def change_detector(self, detectors):
         ''' Updates current detector and flushes the velocities dataset '''
         self.current_detector = detectors.next()
         self.velocities = pd.DataFrame()
