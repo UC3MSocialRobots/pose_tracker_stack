@@ -3,7 +3,8 @@
         pkg="pose_tracker"
         type="test_pose_detector_node.py"
         time-limit="20.0">
-        <!-- <param name="num_instances" value="30" type="int" /> -->
+        <param name="dataframe_length" value="30" type="int" />
+        <param name="movement_threshold" value="1.5" type="double" /> <!-- m/s -->
   </test>
 
   <!-- Nodes needed by tests -->
