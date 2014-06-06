@@ -1,20 +1,25 @@
 PKG = 'pose_tracker'
-import roslib; roslib.load_manifest(PKG)
+import roslib
+roslib.load_manifest(PKG)
 
 # from pytest import mark
 import unittest
 import pandas as pd
 from numpy import linspace
 
-import circular_dataframe as cdf
+import pose_detector.circular_dataframe as cdf
+
 
 def _make_dataframe(nrows, columns):
         ncols = len(columns)
-        array = linspace(1, nrows*ncols, nrows*ncols).reshape(nrows, ncols)
+        array = linspace(1, nrows * ncols, nrows * ncols).reshape(nrows, ncols)
         return pd.DataFrame(array, columns=columns)
 
+
 class TestDropOlderRows(unittest.TestCase):
+
     """Tests"""
+
     def __init__(self, *args):
         super(TestDropOlderRows, self).__init__(*args)
 
@@ -25,7 +30,7 @@ class TestDropOlderRows(unittest.TestCase):
             setattr(self, 'df{}'.format(l), _make_dataframe(l, self.cols))
 
         self.s = pd.Series(range(5), index=self.cols)
-        
+
     def tearDown(self):
         pass
 
@@ -48,21 +53,25 @@ class TestDropOlderRows(unittest.TestCase):
     def test_df_len_greater_than_max_len_drops_older_rows_of_df(self):
         for df in (self.df5, self.df10):
             for diff in (1, 3, 5):
-                maxlen = len(df) - diff 
+                maxlen = len(df) - diff
                 new_df = cdf._drop_older_rows(df, maxlen)
                 self.assertTrue(len(new_df) >= maxlen)
                 self.assertTrue(all(new_df == df.tail(maxlen)))
-            
+
+
 class TestAppendInstances(unittest.TestCase):
+
     """Tests"""
+
     def __init__(self, *args):
         super(TestAppendInstances, self).__init__(*args)
 
     def setUp(self):
         self.cols = list('ABCDE')
-        self.df = pd.DataFrame(linspace(1,10,10).reshape(2,5), columns=self.cols)
+        self.df = pd.DataFrame(
+            linspace(1, 10, 10).reshape(2, 5), columns=self.cols)
         self.s = pd.Series(range(5), index=self.cols)
-        
+
     def tearDown(self):
         pass
 
@@ -74,7 +83,7 @@ class TestAppendInstances(unittest.TestCase):
         new_df = cdf.append_instance(self.df, self.s, 2)
         self.assertEqual(len(new_df), 2)
         self.assertTrue(all(new_df.ix[0] == self.df.ix[1]))
-        
+
     def test_returns_new_df_with_appended_instance(self):
         new_df = cdf.append_instance(self.df, self.s, 2)
         self.assertEqual(len(new_df), 2)
@@ -85,4 +94,3 @@ if __name__ == '__main__':
     import rosunit
     rosunit.unitrun(PKG, 'test_drop_older_rows', TestDropOlderRows)
     rosunit.unitrun(PKG, 'test_append_instances', TestAppendInstances)
-

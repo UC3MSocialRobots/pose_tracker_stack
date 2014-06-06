@@ -149,7 +149,7 @@ class TestIsStillAndIsMovingAreMutuallyExclusive(unittest.TestCase):
         pass
 
     def test_is_still_and_is_moving_give_contrary_results(self):
-        for dataset in self.datasets[1:]:
+        for dataset in self.datasets:
             isstill = is_still(3, dataset)
             ismoving = is_moving(3, dataset)
             self.assertNotEqual(isstill, ismoving,
@@ -158,6 +158,8 @@ class TestIsStillAndIsMovingAreMutuallyExclusive(unittest.TestCase):
                                 "for threshold {} and dataset:\n{}"
                                 .format(isstill, ismoving, 3, dataset))
 
+    def test_is_still_and_is_moving_produce_same_results(self):
+        self.fail('TODO')
 
 if __name__ == '__main__':
     import rosunit

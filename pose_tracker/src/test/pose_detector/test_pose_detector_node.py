@@ -16,8 +16,10 @@ import numpy as np
 import pandas as pd
 
 from pose_msgs.msg import (PoseInstance, JointVelocities)
-from pose_detector import (DatasetNotFullError, PoseDetectorNode,
-                           is_dataset_full, is_still, is_moving)
+from pose_detector.pose_detector_node import (DatasetNotFullError,
+                                              PoseDetectorNode,
+                                              is_dataset_full,
+                                              is_still, is_moving)
 
 
 class TestPoseDetectorNode(unittest.TestCase):
@@ -44,23 +46,26 @@ class TestPoseDetectorNode(unittest.TestCase):
         ''' Tests if detector changes properly.'''
         for expected_detector in [is_moving, is_still, is_moving, is_still]:
             self.__fill_velocities_dataframe()
-            self.node.change_state()
+            self.node.change_state(self.node.detectors)
             self.assertEqual(expected_detector, self.node.current_detector)
 
     def test_change_state_flushes_velocities_dataframe(self):
         for expected_detector in [is_moving, is_still, is_moving, is_still]:
             self.__fill_velocities_dataframe()
-            self.node.change_state()
+            self.node.change_state(self.node.detectors)
             self.assertEqual(0, len(self.node.velocities))
 
+    @unittest.skip('TODO')
     def test_velocities_cb(self):
         self.fail("TODO")
 
+    @unittest.skip('TODO')
     def test_velocities_cb_publishes_an_instance_when_the_user_is_still(self):
-        pass
+        self.fail('TODO')
 
+    @unittest.skip('TODO')
     def test_velocities_cb_publishes_velos_when_the_user_starts_moving(self):
-        pass
+        self.fail('TODO')
 
 
 if __name__ == '__main__':
