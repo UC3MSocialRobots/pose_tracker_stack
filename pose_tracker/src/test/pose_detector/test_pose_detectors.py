@@ -69,7 +69,7 @@ class TestIsStill(unittest.TestCase):
         # rospy.init_node(name)
 
     def setUp(self):
-        self.zeros = pd.DataFrame(np.zeros(15).reshape(3, 5)),
+        self.zeros = pd.DataFrame(np.zeros(15).reshape(3, 5))
         self.point_ones = pd.DataFrame(np.ones(15).reshape(3, 5) * 0.1)
         self.fives = pd.DataFrame(np.ones(15).reshape(3, 5) * 5)
         self.tens = pd.DataFrame(np.ones(15).reshape(3, 5) * 10)
@@ -105,7 +105,7 @@ class TestIsMoving(unittest.TestCase):
         # rospy.init_node(name)
 
     def setUp(self):
-        self.zeros = pd.DataFrame(np.zeros(15).reshape(3, 5)),
+        self.zeros = pd.DataFrame(np.zeros(15).reshape(3, 5))
         self.point_ones = pd.DataFrame(np.ones(15).reshape(3, 5) * 0.1)
         self.fives = pd.DataFrame(np.ones(15).reshape(3, 5) * 5)
         self.tens = pd.DataFrame(np.ones(15).reshape(3, 5) * 10)
@@ -129,17 +129,17 @@ class TestIsMoving(unittest.TestCase):
             self.assertTrue(is_moving(0, dataset))
 
 
-class TestIsStillAndIsMovingAreMutuallyExclusive(unittest.TestCase):
+class TestIsStillAndIsMovingAreCoherent(unittest.TestCase):
 
     """Tests"""
 
     def __init__(self, *args):
-        super(TestIsStillAndIsMovingAreMutuallyExclusive, self).__init__(*args)
+        super(TestIsStillAndIsMovingAreCoherent, self).__init__(*args)
         # name = 'test_pose_detector'
         # rospy.init_node(name)
 
     def setUp(self):
-        self.zeros = pd.DataFrame(np.zeros(15).reshape(3, 5)),
+        self.zeros = pd.DataFrame(np.zeros(15).reshape(3, 5))
         self.point_ones = pd.DataFrame(np.ones(15).reshape(3, 5) * 0.1)
         self.fives = pd.DataFrame(np.ones(15).reshape(3, 5) * 5)
         self.tens = pd.DataFrame(np.ones(15).reshape(3, 5) * 10)
@@ -148,23 +148,33 @@ class TestIsStillAndIsMovingAreMutuallyExclusive(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_is_still_and_is_moving_give_contrary_results(self):
+    def test_if_is_still_is_False_is_moving_should_be_True_and_viceversa(self):
         for dataset in self.datasets:
             isstill = is_still(3, dataset)
             ismoving = is_moving(3, dataset)
             self.assertNotEqual(isstill, ismoving,
                                 "{} == {}\n"
                                 "is_still and is_moving gave same results "
-                                "for threshold {} and dataset:\n{}"
+                                "for threshold {} and dataset:\n{}\n"
                                 .format(isstill, ismoving, 3, dataset))
 
-    def test_is_still_and_is_moving_produce_same_results(self):
-        self.fail('TODO')
+    # @unittest.skip('ToDo')
+    def test_is_still_and_is_moving_return_False_with_intermediate_data(self):
+        for dataset in self.datasets:
+            dataset.iloc[1, 1] = 30
+            dataset.iloc[2, 2] = -30
+            isstill = is_still(3, dataset)
+            ismoving = is_moving(3, dataset)
+            for s, detector in ('is_still', isstill), ('is_moving', ismoving):
+                self.assertFalse(detector,
+                                 "{} should have returned False"
+                                 "for threshold {} and dataset:\n{}\n"
+                                 .format(s, detector, 3, dataset))
+
 
 if __name__ == '__main__':
     import rosunit
     rosunit.unitrun(PKG, 'test_is_dataset_full', TestIsDatasetFull)
     rosunit.unitrun(PKG, 'test_is_still', TestIsStill)
     rosunit.unitrun(PKG, 'test_is_moving', TestIsMoving)
-    rosunit.unitrun(PKG, 'test_is_moving',
-                    TestIsStillAndIsMovingAreMutuallyExclusive)
+    rosunit.unitrun(PKG, 'test_is_moving', TestIsStillAndIsMovingAreCoherent)
