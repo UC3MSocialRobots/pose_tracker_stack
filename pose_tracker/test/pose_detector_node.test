@@ -1,17 +1,28 @@
 <launch>
-  <test test-name="test_pose_detector_node"
-        pkg="pose_tracker"
-        type="test_pose_detector_node.py"
-        time-limit="20.0">
-        <param name="dataframe_length" value="30" type="int" />
-        <param name="movement_threshold" value="1.5" type="double" /> <!-- m/s -->
-  </test>
-  <!-- TODO: Lanzar el test que carga el nodo con un remap a otro namespace -->
-
-  <!-- Nodes needed by tests -->
-  <!-- <node name="joint_velocities_publisher"
-        pkg="pose_tracker"
-        type="joint_velocities_publisher.py">
-        <param name="num_instances" value="30" type="int" />
-  </node> -->
+  <!-- Separate group to prevent node naming collisions -->
+  <group ns="tests_change_detector">
+    <test test-name="test_pose_detector_changes_detectors_properly"
+          pkg="pose_tracker"
+          type="test_pose_detector_changes_detector.py"
+          time-limit="20.0">
+          <param name="dataframe_length" value="30" type="int" />
+          <param name="movement_threshold" value="1.5" type="double" /> <!-- m/s -->
+    </test>
+  </group>
+  
+  <group ns="tests_pose_detector_node">
+    <test test-name="test_pose_detector_node"
+          pkg="pose_tracker"
+          type="test_pose_detector_node.py"
+          time-limit="20.0">
+    </test>
+    
+    <!-- Nodes needed by tests -->
+    <node name="pose_detector"
+          pkg="pose_tracker"
+          type="pose_detector_node.py">
+          <param name="dataframe_length" value="30" type="int" />
+          <param name="movement_threshold" value="1.5" type="double" /> <!-- m/s -->
+    </node>
+  </group>
 </launch>

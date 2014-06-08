@@ -6,7 +6,8 @@ from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
 # from operator import (gt, lt)
 from collections import namedtuple
-import itertools as it
+# import itertools as it
+from itertools import cycle
 import pandas as pd
 
 from func_utils import error_handler as eh
@@ -85,12 +86,12 @@ class PoseDetectorNode():
         self.pose_instance = PoseInstance()
 
         # Detectors
-        _still_detector = \
+        self._still_detector = \
             Detector(is_still, self.__pose_publisher, self.pose_instance)
-        _moving_detector = \
+        self._moving_detector = \
             Detector(is_moving, self.__velo_publisher, self.velocities)
 
-        self.detectors = it.cycle([_still_detector, _moving_detector])
+        self.detectors = cycle([self._still_detector, self._moving_detector])
         self.current_detector = self.detectors.next()
 
     def instance_cb(self, msg):
