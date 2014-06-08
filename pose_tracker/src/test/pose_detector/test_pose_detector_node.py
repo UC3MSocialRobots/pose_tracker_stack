@@ -3,23 +3,37 @@
 @author: Victor Gonzalez Pacheco
 @date: 2014-05
 '''
-from __future__ import division
+# from __future__ import division
 PKG = 'pose_tracker'
 import roslib
 roslib.load_manifest(PKG)
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
-# import itertools as it
+import itertools as it
 import unittest
-import numpy as np
-import pandas as pd
-
+# import numpy as np
+# import pandas as pd
+from func_utils import error_handler as eh
+from param_utils import load_params
 from pose_msgs.msg import (PoseInstance, JointVelocities)
 from pose_detector.pose_detector_node import (DatasetNotFullError,
                                               PoseDetectorNode, Detector,
                                               is_dataset_full,
                                               is_still, is_moving)
+
+_NODE_PARAMS = ['dataframe_length', 'movement_threshold']
+
+COLUMNS = list('ABCDEF')
+MSG_LEN = len(COLUMNS)
+POSE_INSTANCE = PoseInstance(columns=COLUMNS, instance=[0.0] * MSG_LEN)
+STILL_MSG = JointVelocities(columns=COLUMNS, velocities=[0.0] * MSG_LEN)
+MOVING_MSG = JointVelocities(columns=COLUMNS, velocities=[30.0] * MSG_LEN)
+ALMOST_STILL_MSG = JointVelocities(columns=COLUMNS,
+                                   velocities=[0.0, 30.0] * (MSG_LEN / 2))
+ALMOST_MOVING_MSG = JointVelocities(columns=COLUMNS,
+                                    velocities=[0.0, 30.0] * (MSG_LEN / 2))
+THRESHOLD = 10
 
 
 class TestPoseDetectorNode(unittest.TestCase):
@@ -31,29 +45,64 @@ class TestPoseDetectorNode(unittest.TestCase):
         name = 'test_pose_detector'
         rospy.init_node(name)
         # self.node = PoseDetectorNode()
+        with eh(logger=logfatal, log_msg="Couldn't load parameters",
+                reraise=True):
+            self.dflen, self.threshold = load_params(_NODE_PARAMS)
+        # self.dflen = rospy.get_param('dataframe_length')
+        # self.th = rospy.get_param('movement_threshold')
+
+        self.velo_pub = rospy.Publisher('joint_velocities', JointVelocities)
+        self.instance_pub = rospy.Publisher('pose_instance', PoseInstance)
+
+        rospy.Subscriber('user_pose', PoseInstance, self.__user_pose_cb)
+        rospy.Subscriber('user_moving', JointVelocities, self.__user_moving_cb)
 
     def setUp(self):
-        dstill = self.node._still_detector
-        dmoving = self.node._moving_detector
-        self.test_detectors = [dmoving, dstill] * 3
+        self.received_pose = None
+        self.user_moving = None
+        self.instance_pub.publish(POSE_INSTANCE)
 
     def tearDown(self):
         pass
+
+    def __user_pose_cb(self, msg):
+        logwarn('Received message with user_still at: {}'.format(msg))
+        self.received_pose = msg
+
+    def __user_moving_cb(self, msg):
+        logwarn('Received message with user_moving at: {}'.format(msg))
+        self.user_moving = msg
+
+    def publish_n(self, n, publisher, msg):
+        for i in xrange(n):
+            publisher.publish(msg)
+            loginfo("Published message to topic {}".format(publisher))
+
+    def fake_user_still(self):
+        self.publish_n(self.dflen, self.velo_pub, STILL_MSG)
+
+    def fake_user_moving(self):
+        self.publish_n(self.dflen, self.velo_pub, MOVING_MSG)
 
     @unittest.skip('TODO')
     def test_velocities_cb(self):
         self.fail("TODO")
 
-    @unittest.skip('TODO')
+    # @unittest.skip('TODO')
     def test_velocities_cb_publishes_an_instance_when_the_user_is_still(self):
-        self.fail('TODO')
+        self.fake_user_still()
+        self.assertEqual(self.received_pose, POSE_INSTANCE)
 
-    @unittest.skip('TODO')
+    # @unittest.skip('TODO')
     def test_velocities_cb_publishes_velos_when_the_user_starts_moving(self):
-        self.fail('TODO')
+        self.fake_user_still()
+        self.fake_user_moving()
+        self.assertEqual(self.user_moving, MOVING_MSG)
 
     @unittest.skip('TODO')
-    def test_Node_switches_detector_when_user_starts_stops_moving(self):
+    def test_Node_switches_detector_when_user_starts_or_stops_moving(self):
+        ''' TODO: make a service in the node so others can know
+            which detector is used each moment '''
         self.fail('TODO')
 
 

@@ -5,24 +5,32 @@
           pkg="pose_tracker"
           type="test_pose_detector_changes_detector.py"
           time-limit="20.0">
-          <param name="dataframe_length" value="30" type="int" />
-          <param name="movement_threshold" value="1.5" type="double" /> <!-- m/s -->
+          <param name="dataframe_length" value="10" type="int" />
+          <param name="movement_threshold" value="5" type="double" /> <!-- m/s -->
     </test>
   </group>
   
-  <group ns="tests_pose_detector_node">
-    <test test-name="test_pose_detector_node"
-          pkg="pose_tracker"
-          type="test_pose_detector_node.py"
-          time-limit="20.0">
-    </test>
-    
-    <!-- Nodes needed by tests -->
-    <node name="pose_detector"
-          pkg="pose_tracker"
-          type="pose_detector_node.py">
-          <param name="dataframe_length" value="30" type="int" />
-          <param name="movement_threshold" value="1.5" type="double" /> <!-- m/s -->
-    </node>
-  </group>
+  
+  <test test-name="test_pose_detector_node"
+        pkg="pose_tracker"
+        type="test_pose_detector_node.py"
+        time-limit="20.0">
+        <param name="dataframe_length" value="10" type="int" />
+        <param name="movement_threshold" value="5" type="double" /> <!-- m/s -->
+        <!-- topic remaping to connect test node with tested node -->
+        <remap from="joint_velocities" to="/pose_detector/joint_velocities"/>
+        <remap from="pose_instance" to="/pose_detector/pose_instance"/>
+        <!-- <remap from="pose_detector/user_pose" to="user_pose"/>
+        <remap from="pose_detector/user_moving" to="user_moving"/> -->
+  </test>
+  
+  <!-- Nodes needed by tests -->
+  <node name="pose_detector"
+        pkg="pose_tracker"
+        type="pose_detector_node.py">
+        <param name="dataframe_length" value="10" type="int" />
+        <param name="movement_threshold" value="5" type="double" /> <!-- m/s -->
+        <remap from="user_pose" to="test_pose_detector_node/user_pose"/>
+        <remap from="user_moving" to="test_pose_detector_node/user_moving"/>
+  </node>
 </launch>

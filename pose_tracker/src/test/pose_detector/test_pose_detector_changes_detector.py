@@ -7,26 +7,21 @@ from __future__ import division
 PKG = 'pose_tracker'
 import roslib
 roslib.load_manifest(PKG)
-# import rospy
-# from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
-# import itertools as it
 import unittest
 import numpy as np
 import pandas as pd
 
-# from pose_msgs.msg import (PoseInstance, JointVelocities)
+
 from pose_detector.pose_detector_node import PoseDetectorNode
 
 
-class TestPoseDetectorNode(unittest.TestCase):
+class TestPoseDetectorChangesProperly(unittest.TestCase):
 
     """Tests"""
 
     def __init__(self, *args):
-        super(TestPoseDetectorNode, self).__init__(*args)
-        # name = 'test_pose_detector'
-        # rospy.init_node(name)
+        super(TestPoseDetectorChangesProperly, self).__init__(*args)
         self.node = PoseDetectorNode()
 
     def setUp(self):
@@ -51,7 +46,7 @@ class TestPoseDetectorNode(unittest.TestCase):
             self.__change_detector()
             self.assertEqual(expected_detector, self.node.current_detector)
 
-    def test_change_detector_flushes_velocities_dataframe(self):
+    def test_change_detector_flushes_velocities_dataframe_after_changes(self):
         for expected_detector in self.test_detectors:
             self.__change_detector()
             self.assertEqual(0, len(self.node.velocities))
@@ -59,5 +54,6 @@ class TestPoseDetectorNode(unittest.TestCase):
 
 if __name__ == '__main__':
     import rostest
-    rostest.rosrun(PKG, 'test_pose_detector_node', TestPoseDetectorNode,
-                   coverage_packages=['pose_detector.pose_detector_node.py'])
+    rostest.rosrun(PKG, 'test_pose_detector_node_changes_detectors_properly',
+                   TestPoseDetectorChangesProperly)
+                   # coverage_packages=['pose_detector.pose_detector_node.py'])
