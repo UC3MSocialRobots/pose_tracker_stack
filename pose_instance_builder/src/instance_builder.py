@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-import roslib; roslib.load_manifest('pose_instance_builder')
+import roslib
+roslib.load_manifest('pose_instance_builder')
 #import rospy
 # from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
-from itertools import (chain, izip, product, starmap)
+from itertools import (chain, imap, izip, product, starmap)
 from toolz import (concat, cons)
 
 from pi_tracker.msg import Skeleton
@@ -17,25 +18,27 @@ def _check_msg_preconditions(msg, msg_class, label):
     ''' Processes some preconditions for incoming messages '''
     # Check message type
     if not isinstance(msg, msg_class):
-         raise TypeError("Messge not a {}.msg".format(msg_class()))
+        raise TypeError("Messge not a {}.msg".format(msg_class()))
     # Check Labels
     if not label:
         raise TypeError('Empty label')
     if not isinstance(label, str):
-         raise TypeError("Label is not a string")
+        raise TypeError("Label is not a string")
     if label == 'UNKNOWN':
         raise TypeError('"UNKNOWN" label')
 
 
 class IBuilder():
+
     ''' Base class that defines the interface to that other builders
         should implement.
     '''
+
     def __init__(self, *args, **kwargs):
         pass
 
-    def get_msg_class():
-        ''' Should return the class of the skeleton message 
+    def get_msg_class(self):
+        ''' Should return the class of the skeleton message
             that the builder is able to parse
         '''
         pass
@@ -52,14 +55,17 @@ class IBuilder():
 
 
 class PiTrackerIBuilder():
+
+    ''' Instance Builder for skeletons coming from pi_tracker package'''
+
     def __init__(self, *args, **kwargs):
         pass
-    
+
     def get_msg_class(self):
         return Skeleton
 
     def parse_msg(self, msg, label):
-        ''' Parses a pi_tracker.msg.Skeleton message and converts it to a 
+        ''' Parses a pi_tracker.msg.Skeleton message and converts it to a
             L{PoseInstance} message
             @name msg: The message to be parsed
             @type msg: pi_tracker.msg.Skeleton
@@ -68,10 +74,10 @@ class PiTrackerIBuilder():
             @raise TypeError if preconditions fail
         '''
         _check_msg_preconditions(msg, self.get_msg_class(), label)
-        
+
         msg_fields = izip(msg.position, msg.orientation, msg.confidence)
         instance = cons(msg.user_id, concat(starmap(self._parse, msg_fields)))
-        return PoseInstance(columns=msg.name, 
+        return PoseInstance(columns=msg.name,
                             label=str(label),
                             instance=list(instance))
 
@@ -82,19 +88,22 @@ class PiTrackerIBuilder():
 
 
 class KinectIBuilder():
+
+    ''' Instance Builder for skeletons coming from kinect package'''
+
     def __init__(self):
         self.joints = ['head', 'neck', 'torso',
                        'left_shoulder', 'left_elbow', 'left_hand',
                        'right_shoulder', 'right_elbow', 'right_hand',
                        'left_hip', 'left_knee', 'left_foot',
                        'right_hip', 'right_knee', 'right_foot']
-        self.attribs =  ['pos_x', 'pos_y', 'pos_z',
-                         'orient_x', 'orient_y', 'orient_z', 'orient_w',
-                         'pos_confidence', 'orient_confidence']
+        self.attribs = ['pos_x', 'pos_y', 'pos_z',
+                        'orient_x', 'orient_y', 'orient_z', 'orient_w',
+                        'pos_confidence', 'orient_confidence']
         self.header = ['user_id', 'stamp']
-        self.cols = map('_'.join, product(self.joints, self.attribs))
+        self.cols = imap('_'.join, product(self.joints, self.attribs))
         self.cols = list(chain(self.header, self.cols))
-    
+
     def get_msg_class(self):
         return NiteSkeletonList
 
@@ -107,15 +116,15 @@ class KinectIBuilder():
             @param label: the label to add to the PoseInstance message
             @type label: str
             @return: a PoseInstance message '''
-        self.check_parse_msg_preconditions(msg, label)
+        self._check_parse_msg_preconditions(msg, label)
         skel = msg.skeletons[0]   # only parse the first skeleton
         instance, _ = nsku.unpack_skeleton_msg(skel)
-        return PoseInstance(columns=self.cols, 
+        return PoseInstance(columns=self.cols,
                             label=str(label),
                             instance=list(instance))
 
-    def check_parse_msg_preconditions(self, msg, label):
+    def _check_parse_msg_preconditions(self, msg, label):
+        ''' Helper method to check if all preconditions hold'''
         _check_msg_preconditions(msg, self.get_msg_class(), label)
         if not msg.skeletons:
             raise TypeError("Received a message with no skeletons")
-
