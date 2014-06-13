@@ -129,17 +129,19 @@ class PoseDetectorNode():
         ''' Uses current detector to check if detector condition holds.
             If so, then publishes a message and changes the detector'''
         try:
-            is_dataset_full(self.df)
+            is_dataset_full(self.dflen, self.velocities)
         except DatasetNotFullError:
             return
         if self.current_detector(self.threshold, self.velocities):
-            self.change_detector()
+            self.change_detector(self.detectors)
             self.current_detector.publish(self.current_detector.msg)
+        return self
 
     def change_detector(self, detectors):
         ''' Updates current detector and flushes the velocities dataset '''
         self.current_detector = detectors.next()
         self.velocities = pd.DataFrame()
+        return self
 
     def run(self):
         rospy.spin()
