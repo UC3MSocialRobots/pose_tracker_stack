@@ -19,13 +19,6 @@
   <depend package="rospy_utils"/>
   <!-- <depend package="roscpp"/> -->
 
-  <!-- External dependencies to python packages -->
-  <rosdep name="numpy"/>
-  <rosdep name="pandas"/>
-  <rosdep name="scikit-learn"/>
-  <rosdep name="toolz"/>
-  <rosdep name="mock"/>
-  <rosdep name="PyTables"/>
 </package>
 
 
