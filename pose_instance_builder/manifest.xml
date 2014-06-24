@@ -21,14 +21,6 @@
   <depend package="kinect"/>
   <depend package="pi_tracker"/>
 
-  <!-- External dependencies to python packages -->
-  <rosdep name="PyTables"/>
-  <rosdep name="numpy"/>
-  <rosdep name="pandas"/>
-  <rosdep name="toolz"/>
-  <rosdep name="more-itertools"/>
-  <rosdep name="mock"/>
-
 </package>
 
 
