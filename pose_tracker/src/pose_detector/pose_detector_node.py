@@ -3,10 +3,11 @@ import roslib
 roslib.load_manifest('pose_tracker')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
+from rospy import (Publisher, Subscriber)
 
 # from operator import (gt, lt)
 from collections import namedtuple
-# import itertools as it
+# imitertools as it
 from itertools import cycle
 import pandas as pd
 
@@ -77,11 +78,12 @@ class PoseDetectorNode():
             self.dflen, self.threshold = load_params(_NODE_PARAMS)
 
         ### Publishers and Subscribers
-        rospy.Subscriber('pose_instance', PoseInstance, self.instance_cb)
-        rospy.Subscriber('joint_velocities', JointVelocities, self.velo_cb)
-        self.__pose_pub = rospy.Publisher('user_pose', PoseInstance)
-        self.__moving_pub = rospy.Publisher('user_moving', JointVelocities)
-        self.__is_moving_pub = rospy.Publisher('is_user_moving', Bool)
+        Subscriber('pose_instance', PoseInstance, self.instance_cb)
+        Subscriber('joint_velocities', JointVelocities, self.velo_cb)
+        self.__pose_pub = Publisher('user_pose', PoseInstance, latch=True)
+        self.__is_moving_pub = Publisher('is_user_moving', Bool, latch=True)
+        self.__moving_pub = Publisher('user_moving',
+                                      JointVelocities, latch=True)
 
         self.velocities = pd.DataFrame()
         self.pose_instance = PoseInstance()
@@ -110,12 +112,17 @@ class PoseDetectorNode():
         self._add_msg_to_dataset(msg)
         self.check_dataset()
 
+    def __publish_is_moving_predicate(self, predicate):
+        ''' Publishes a predicate indicating wether the user is moving '''
+        logwarn('Publishing Is User Moving: {}'.format(predicate))
+        self.__is_moving_pub.publish(Bool(predicate))
+
     def __pose_publisher(self, pose_instance):
         ''' Helper method that publishes the user pose
             and a predicate indicating that the user is not moving'''
         self.__pose_pub.publish(pose_instance)
         logwarn('Published user pose: {}'.format(pose_instance))
-        self.__is_moving_pub.publish(Bool(False))
+        self.__publish_is_moving_predicate(False)
 
     def __velo_publisher(self, velocities):
         ''' Helper method that publishes the las velocities instance from
@@ -125,7 +132,7 @@ class PoseDetectorNode():
                               velocities=velocities.iloc[-1].values)
         self.__moving_pub.publish(msg)
         logwarn('Published user moving: {}'.format(msg))
-        self.__is_moving_pub.publish(Bool(True))
+        self.__publish_is_moving_predicate(True)
 
     def _add_msg_to_dataset(self, msg):
         new_instance = pd.Series(msg.velocities, index=msg.columns)
@@ -138,9 +145,9 @@ class PoseDetectorNode():
             is_dataset_full(self.dflen, self.velocities)
         except DatasetNotFullError:
             return
-        if self.current_detector(self.threshold, self.velocities):
+        if self.current_detector.detector(self.threshold, self.velocities):
             self.change_detector(self.detectors)
-            self.current_detector.publish(self.current_detector.msg)
+            self.current_detector.publisher(self.current_detector.msg)
         return self
 
     def change_detector(self, detectors):
