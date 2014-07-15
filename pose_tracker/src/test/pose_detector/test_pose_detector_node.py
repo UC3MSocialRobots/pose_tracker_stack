@@ -16,6 +16,7 @@ import unittest
 # import pandas as pd
 from func_utils import error_handler as eh
 from param_utils import load_params
+from std_msgs.msg import Bool
 from pose_msgs.msg import (PoseInstance, JointVelocities)
 from pose_detector.pose_detector_node import (DatasetNotFullError,
                                               PoseDetectorNode, Detector,
@@ -33,7 +34,6 @@ ALMOST_STILL_MSG = JointVelocities(columns=COLUMNS,
                                    velocities=[0.0, 30.0] * (MSG_LEN / 2))
 ALMOST_MOVING_MSG = JointVelocities(columns=COLUMNS,
                                     velocities=[0.0, 30.0] * (MSG_LEN / 2))
-THRESHOLD = 10
 
 
 class TestPoseDetectorNode(unittest.TestCase):
@@ -51,15 +51,21 @@ class TestPoseDetectorNode(unittest.TestCase):
         # self.dflen = rospy.get_param('dataframe_length')
         # self.th = rospy.get_param('movement_threshold')
 
-        self.velo_pub = rospy.Publisher('joint_velocities', JointVelocities)
         self.instance_pub = rospy.Publisher('pose_instance', PoseInstance)
+        self.velo_pub = rospy.Publisher('joint_velocities', JointVelocities)
 
         rospy.Subscriber('user_pose', PoseInstance, self.__user_pose_cb)
         rospy.Subscriber('user_moving', JointVelocities, self.__user_moving_cb)
+        rospy.Subscriber('is_user_moving', Bool, self.__is_user_moving_cb)
+
+        import rostopic
+        logwarn("Showing all topic connections:{}"
+                .format(rostopic._rostopic_list(None, True)))
 
     def setUp(self):
         self.received_pose = None
         self.user_moving = None
+        self.is_user_moving = None
         self.instance_pub.publish(POSE_INSTANCE)
 
     def tearDown(self):
@@ -73,10 +79,14 @@ class TestPoseDetectorNode(unittest.TestCase):
         logwarn('Received message with user_moving at: {}'.format(msg))
         self.user_moving = msg
 
+    def __is_user_moving_cb(self, msg):
+        logwarn('Received an is_user_moving predicate message: {}'.format(msg))
+        self.is_user_moving = msg
+
     def publish_n(self, n, publisher, msg):
         for i in xrange(n):
             publisher.publish(msg)
-            loginfo("Published message to topic {}".format(publisher))
+            logwarn("Published message to topic {}".format(publisher))
 
     def fake_user_still(self):
         self.publish_n(self.dflen, self.velo_pub, STILL_MSG)
@@ -91,12 +101,14 @@ class TestPoseDetectorNode(unittest.TestCase):
     # @unittest.skip('TODO')
     def test_velocities_cb_publishes_an_instance_when_the_user_is_still(self):
         self.fake_user_still()
+        rospy.wait_for_message('user_pose', PoseInstance, timeout=5)
         self.assertEqual(self.received_pose, POSE_INSTANCE)
 
     # @unittest.skip('TODO')
     def test_velocities_cb_publishes_velos_when_the_user_starts_moving(self):
         self.fake_user_still()
         self.fake_user_moving()
+        rospy.wait_for_message('user_moving', JointVelocities, timeout=5)
         self.assertEqual(self.user_moving, MOVING_MSG)
 
     @unittest.skip('TODO')
