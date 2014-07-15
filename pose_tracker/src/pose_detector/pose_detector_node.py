@@ -15,6 +15,7 @@ from param_utils import load_params
 import circular_dataframe as cdf
 
 from pose_msgs.msg import (PoseInstance, JointVelocities)
+from std_msgs.msg import Bool
 
 
 class DatasetNotFullError(Exception):
@@ -80,6 +81,7 @@ class PoseDetectorNode():
         rospy.Subscriber('joint_velocities', JointVelocities, self.velo_cb)
         self.__pose_pub = rospy.Publisher('user_pose', PoseInstance)
         self.__moving_pub = rospy.Publisher('user_moving', JointVelocities)
+        self.__is_moving_pub = rospy.Publisher('is_user_moving', Bool)
 
         self.velocities = pd.DataFrame()
         self.pose_instance = PoseInstance()
@@ -109,17 +111,21 @@ class PoseDetectorNode():
         self.check_dataset()
 
     def __pose_publisher(self, pose_instance):
-        ''' Helper method that publishes the user pose '''
+        ''' Helper method that publishes the user pose
+            and a predicate indicating that the user is not moving'''
         self.__pose_pub.publish(pose_instance)
         logwarn('Published user pose: {}'.format(pose_instance))
+        self.__is_moving_pub.publish(Bool(False))
 
     def __velo_publisher(self, velocities):
         ''' Helper method that publishes the las velocities instance from
-            the L{PoseDetectorNode.velocities} DataFrame '''
+            the L{PoseDetectorNode.velocities} DataFrame
+            and a predicate indicating the user is moving'''
         msg = JointVelocities(columns=velocities.columns,
                               velocities=velocities.iloc[-1].values)
         self.__moving_pub.publish(msg)
-        logwarn('Published user movnig: {}'.format(msg))
+        logwarn('Published user moving: {}'.format(msg))
+        self.__is_moving_pub.publish(Bool(True))
 
     def _add_msg_to_dataset(self, msg):
         new_instance = pd.Series(msg.velocities, index=msg.columns)
