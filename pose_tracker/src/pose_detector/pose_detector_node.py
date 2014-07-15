@@ -108,7 +108,7 @@ class PoseDetectorNode():
 
     def velo_cb(self, msg):
         ''' Callback called when L{JointVelocities} msg is received'''
-        logwarn("User is moving at velocity: {}".format(msg))
+        logwarn("User is moving at velocity:\n{}".format(msg))
         self._add_msg_to_dataset(msg)
         self.check_dataset()
 
@@ -121,15 +121,21 @@ class PoseDetectorNode():
         ''' Helper method that publishes the user pose
             and a predicate indicating that the user is not moving'''
         self.__pose_pub.publish(pose_instance)
-        logwarn('Published user pose: {}'.format(pose_instance))
+        logwarn('Published user pose:\n{}'.format(pose_instance))
         self.__publish_is_moving_predicate(False)
 
     def __velo_publisher(self, velocities):
-        ''' Helper method that publishes the las velocities instance from
+        ''' Helper method that publishes the last velocities instance from
             the L{PoseDetectorNode.velocities} DataFrame
             and a predicate indicating the user is moving'''
-        msg = JointVelocities(columns=velocities.columns,
-                              velocities=velocities.iloc[-1].values)
+
+        velos = [0] * len(velocities.columns)
+        try:
+            velos = velocities.iloc[-1].values
+        except:
+            pass
+
+        msg = JointVelocities(columns=velocities.columns, velocities=velos)
         self.__moving_pub.publish(msg)
         logwarn('Published user moving: {}'.format(msg))
         self.__publish_is_moving_predicate(True)
