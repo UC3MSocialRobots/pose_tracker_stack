@@ -40,9 +40,20 @@ def is_moving(threshold, df):
     return df.gt(threshold).values.all()
 
 
+def make_joint_velocities_msg(self, velocities):
+    ''' Returns a L{JointVelocities} msg from the entered velocities dataframe
+    '''
+    velos = []
+    try:
+        velos = velocities.iloc[-1].values
+    except:
+        velos = [0] * len(velocities.columns)
+    return JointVelocities(columns=velocities.columns, velocities=velos)
+
+
 # def next_caller(iterator):
 #     return iterator.next(), iterator
-_DEFAULT_NAME = 'instance_averager_node'
+_DEFAULT_NAME = 'pose_detector_node'
 _NODE_PARAMS = ['dataframe_length', 'movement_threshold']
 
 Detector = namedtuple('Detector', ['detector', 'publisher', 'msg'])
@@ -128,14 +139,7 @@ class PoseDetectorNode():
         ''' Helper method that publishes the last velocities instance from
             the L{PoseDetectorNode.velocities} DataFrame
             and a predicate indicating the user is moving'''
-
-        velos = [0] * len(velocities.columns)
-        try:
-            velos = velocities.iloc[-1].values
-        except:
-            pass
-
-        msg = JointVelocities(columns=velocities.columns, velocities=velos)
+        msg = make_joint_velocities_msg(velocities)
         self.__moving_pub.publish(msg)
         logwarn('Published user moving: {}'.format(msg))
         self.__publish_is_moving_predicate(True)
