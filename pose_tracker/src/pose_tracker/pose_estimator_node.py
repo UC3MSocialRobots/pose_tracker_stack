@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import roslib; roslib.load_manifest('pose_tracker')
+import roslib
+roslib.load_manifest('pose_tracker')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
@@ -18,20 +19,22 @@ from pose_tracker.srv import DatasetInfo
 import kinect.msg as kin
 
 DEFAULT_NAME = 'pose_estimator'
-PARAMS = ('estimator_file', 'dataset_columns', 'drop_columns', 'labels' )
+PARAMS = ('estimator_file', 'dataset_columns', 'drop_columns', 'labels')
 
 
 class PoseEstimatorNode():
+
     ''' Class that builds the node
 
         @keyword node_name: The name of the node
     '''
+
     def __init__(self, **kwargs):
         self.node_name = kwargs.get('node_name', DEFAULT_NAME)
         rospy.init_node(self.node_name)
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initializing " + self.node_name + " node...")
-        
+
         with eh(action=self.shutdown):
             self.load_parameters()
 
@@ -41,11 +44,10 @@ class PoseEstimatorNode():
         # Publishers
         self.publisher = rospy.Publisher('pose_estimated', PoseEstimated)
 
-
     def load_parameters(self):
         ''' Loads the parameters needed by the node.
 
-            The node will acquire new attribs with the name of the loaded params
+            The node acquires new attribs with the name of the loaded params
         '''
         try:
             params = pu.get_parameters(PARAMS)
@@ -69,7 +71,7 @@ class PoseEstimatorNode():
         return self.estimator
 
     def predict(self, instance):
-        ''' 
+        '''
             Predicts the output for an instance
             @TODO: fill this method
         '''
@@ -80,18 +82,19 @@ class PoseEstimatorNode():
 
     def _unpack_skeleton_msg(self, skel_msg):
         ''' Converts a NiteskeletonMsg to a list to a pandas.Series'''
-        return Series(list(nsku.unpack_skeleton_msg(skel_msg)[1]), 
-                      index=self.dataset_columns).drop(self.drop_columns,axis=1)
+        unpacked = list(nsku.unpack_skeleton_msg(skel_msg)[1])
+        cols = self.dataset_columns
+        return Series(unpacked, index=cols).drop(self.drop_columns, axis=1)
 
     def skeleton_cb(self, skels):
         with eh(logger=logwarn, low_msg='Could not estimate pose. '):
             pe_msg = PoseEstimated()
-            pe_msg.raw_instance = self._unpack_skeleton_msg(skels.skeletons[0]) 
+            pe_msg.raw_instance = self._unpack_skeleton_msg(skels.skeletons[0])
             pe_msg.predicted_label_id = self.predict(pe_msg.raw_instance)
             pe_msg.predicted_label = self.labels[pe_msg.predicted_label_id]
             pe_msg.label_names = self.labels
             pe_msg.label_probas = self.predict_proba(pe_msg.raw_instance)
-    
+
             self.publisher.publish(pe_msg)
 
     def get_dataset_info(self):
@@ -110,7 +113,7 @@ class PoseEstimatorNode():
             rospy.spin()
 
     def shutdown(self):
-        ''' Closes the node ''' 
+        ''' Closes the node '''
         rospy.loginfo('Shutting down ' + rospy.get_name() + ' node')
 
 

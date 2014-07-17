@@ -3,7 +3,7 @@ import roslib
 roslib.load_manifest('pose_tracker')
 import rospy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
-from rospy import (Publisher, Subscriber)
+from rospy import (Publisher, Subscriber, Service)
 
 # from operator import (gt, lt)
 from collections import namedtuple
@@ -15,6 +15,8 @@ from func_utils import error_handler as eh
 from param_utils import load_params
 import circular_dataframe as cdf
 
+from pose_tracker.srv import Detector as DetectorSrv
+from pose_tracker.srv import DetectorResponse
 from pose_msgs.msg import (PoseInstance, JointVelocities)
 from std_msgs.msg import Bool
 
@@ -40,7 +42,7 @@ def is_moving(threshold, df):
     return df.gt(threshold).values.all()
 
 
-def make_joint_velocities_msg(self, velocities):
+def make_joint_velocities_msg(velocities):
     ''' Returns a L{JointVelocities} msg from the entered velocities dataframe
     '''
     velos = []
@@ -56,7 +58,7 @@ def make_joint_velocities_msg(self, velocities):
 _DEFAULT_NAME = 'pose_detector_node'
 _NODE_PARAMS = ['dataframe_length', 'movement_threshold']
 
-Detector = namedtuple('Detector', ['detector', 'publisher', 'msg'])
+Detector = namedtuple('Detector', ['name', 'detector', 'publisher', 'data'])
 
 
 class PoseDetectorNode():
@@ -88,6 +90,8 @@ class PoseDetectorNode():
                 reraise=True):
             self.dflen, self.threshold = load_params(_NODE_PARAMS)
 
+        self.__build_detectors()
+
         ### Publishers and Subscribers
         Subscriber('pose_instance', PoseInstance, self.instance_cb)
         Subscriber('joint_velocities', JointVelocities, self.velo_cb)
@@ -95,58 +99,84 @@ class PoseDetectorNode():
         self.__is_moving_pub = Publisher('is_user_moving', Bool, latch=True)
         self.__moving_pub = Publisher('user_moving',
                                       JointVelocities, latch=True)
+        # Services
+        self.detector_srv = Service('detector', DetectorSrv, self._detector_cb)
 
         self.velocities = pd.DataFrame()
         self.pose_instance = PoseInstance()
 
-        self.__build_detectors()
+    def get_pose_instance(self):
+        return self.pose_instance
+
+    def get_velocities(self):
+        return self.velocities
 
     def __build_detectors(self):
         ''' Helper method to create the detectors
             used to known wheter the user is still or moving'''
-        self._still_detector = \
-            Detector(is_still, self.__pose_publisher, self.pose_instance)
-        self._moving_detector = \
-            Detector(is_moving, self.__velo_publisher, self.velocities)
+        self._still_detector = Detector('is_still_detector', is_still,
+                                        self.__pose_publisher,
+                                        self.get_pose_instance)
+        self._moving_detector = Detector('is_moving_detector', is_moving,
+                                         self.__velo_publisher,
+                                         self.get_velocities)
 
+        self.detector_names = ['is_still_detector', 'is_moving_detector']
         self.detectors = cycle([self._still_detector, self._moving_detector])
-        self.current_detector = self.detectors.next()
+        self.change_detector(self.detectors)
+        return self
 
     def instance_cb(self, msg):
         ''' Stores the latest received L{PoseInstance} message '''
-        logwarn("Instance Received: {}".format(msg))
+        logdebug("Instance Received:\n{}".format(msg))
         self.pose_instance = msg
 
     def velo_cb(self, msg):
         ''' Callback called when L{JointVelocities} msg is received'''
-        logwarn("User is moving at velocity:\n{}".format(msg))
+        logdebug("User is moving at velocity:\n{}".format(msg))
         self._add_msg_to_dataset(msg)
         self.check_dataset()
 
+    def __find_detector(self, dname):
+        ''' Sets detector to the specified dname.
+            Warning: assumes dname is a valid detector '''
+        while dname != self.current_detector.name:
+            self.change_detector(self.detectors)
+
+    def _detector_cb(self, srv):
+        ''' Callback to handle detector operation requests'''
+        resp = DetectorResponse(self.current_detector.name, True)
+        if srv.set_detector in self.detector_names:
+            self.__find_detector(srv.set_detector)
+        else:
+            resp.success = False
+        return resp
+
     def __publish_is_moving_predicate(self, predicate):
         ''' Publishes a predicate indicating wether the user is moving '''
-        logwarn('Publishing Is User Moving: {}'.format(predicate))
+        logdebug('Publishing Is User Moving: {}'.format(predicate))
         self.__is_moving_pub.publish(Bool(predicate))
 
     def __pose_publisher(self, pose_instance):
         ''' Helper method that publishes the user pose
             and a predicate indicating that the user is not moving'''
-        self.__pose_pub.publish(pose_instance)
-        logwarn('Published user pose:\n{}'.format(pose_instance))
+        self.__pose_pub.publish(pose_instance())
+        logdebug('Published user pose:\n{}'.format(pose_instance()))
         self.__publish_is_moving_predicate(False)
 
     def __velo_publisher(self, velocities):
         ''' Helper method that publishes the last velocities instance from
             the L{PoseDetectorNode.velocities} DataFrame
             and a predicate indicating the user is moving'''
-        msg = make_joint_velocities_msg(velocities)
+        msg = make_joint_velocities_msg(velocities())
         self.__moving_pub.publish(msg)
-        logwarn('Published user moving: {}'.format(msg))
+        logdebug('Published user moving:\n{}'.format(msg))
         self.__publish_is_moving_predicate(True)
 
     def _add_msg_to_dataset(self, msg):
         new_instance = pd.Series(msg.velocities, index=msg.columns)
         self.velocities = cdf.append_instance(self.velocities, new_instance)
+        return self
 
     def check_dataset(self):
         ''' Uses current detector to check if detector condition holds.
@@ -156,14 +186,15 @@ class PoseDetectorNode():
         except DatasetNotFullError:
             return
         if self.current_detector.detector(self.threshold, self.velocities):
+            self.current_detector.publisher(self.current_detector.data)
             self.change_detector(self.detectors)
-            self.current_detector.publisher(self.current_detector.msg)
         return self
 
     def change_detector(self, detectors):
         ''' Updates current detector and flushes the velocities dataset '''
         self.current_detector = detectors.next()
         self.velocities = pd.DataFrame()
+        loginfo("Changing detector to: {}".format(self.current_detector.name))
         return self
 
     def run(self):
@@ -171,6 +202,10 @@ class PoseDetectorNode():
 
     def shutdown(self):
         ''' Closes the node '''
+        try:
+            self.detector_srv.shutdown()
+        except:
+            pass
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
 
 

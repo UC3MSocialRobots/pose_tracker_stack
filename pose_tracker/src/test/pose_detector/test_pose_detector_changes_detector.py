@@ -22,15 +22,28 @@ class TestPoseDetectorChangesProperly(unittest.TestCase):
 
     def __init__(self, *args):
         super(TestPoseDetectorChangesProperly, self).__init__(*args)
-        self.node = PoseDetectorNode()
+        # self.node = PoseDetectorNode()
+
+    @classmethod
+    def setUpClass(cls):
+        cls.node = PoseDetectorNode()
+        from rospy.service import ServiceManager
+        cls._service_manager = ServiceManager()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._service_manager.unregister_all()
 
     def setUp(self):
         dstill = self.node._still_detector
         dmoving = self.node._moving_detector
         self.test_detectors = [dmoving, dstill] * 3
+        self.test_dnames = ['is_moving_detector',
+                            'is_still_detector'] * 3
 
     def tearDown(self):
-        pass
+        self.node.detector_srv.shutdown()
+        self.node.shutdown()
 
     def __fill_velocities_dataframe(self):
         data = np.linspace(1, 10, 10).reshape(2, 5)
@@ -42,9 +55,11 @@ class TestPoseDetectorChangesProperly(unittest.TestCase):
 
     def test_change_detector_selects_proper_detector_in_each_change(self):
         ''' Tests if detector changes properly.'''
-        for expected_detector in self.test_detectors:
+        for expected_detector, expected_dname in zip(self.test_detectors,
+                                                     self.test_dnames):
             self.__change_detector()
             self.assertEqual(expected_detector, self.node.current_detector)
+            self.assertEqual(expected_dname, self.node.current_detector.name)
 
     def test_change_detector_flushes_velocities_dataframe_after_changes(self):
         for expected_detector in self.test_detectors:
