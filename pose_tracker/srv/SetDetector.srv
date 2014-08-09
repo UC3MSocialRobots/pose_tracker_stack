@@ -1,0 +1,4 @@
+# Service that attempts to change the current detector to a new one
+string detector_name
+---
+bool success
