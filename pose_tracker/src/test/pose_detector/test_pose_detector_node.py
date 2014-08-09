@@ -8,15 +8,18 @@ PKG = 'pose_tracker'
 import roslib
 roslib.load_manifest(PKG)
 import rospy
+from rospy import ServiceProxy
 from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
 
 import itertools as it
 import unittest
+from toolz import take
 # import numpy as np
 # import pandas as pd
 from func_utils import error_handler as eh
 from param_utils import load_params
-from pose_tracker.srv import Detector as DetectorSrv
+from pose_tracker.srv import SetDetector as SetDetectorSrv
+from pose_tracker.srv import CurrentDetector as CurrDetectorSrv
 from std_msgs.msg import Bool
 from pose_msgs.msg import (PoseInstance, JointVelocities)
 from pose_detector.pose_detector_node import (DatasetNotFullError,
@@ -60,9 +63,12 @@ class TestPoseDetectorCommon(unittest.TestCase):
         rospy.Subscriber('user_moving', JointVelocities, self.__user_moving_cb)
         rospy.Subscriber('is_user_moving', Bool, self.__is_user_moving_cb)
 
-        rospy.wait_for_service('detector')
+        rospy.wait_for_service('set_detector')
+        rospy.wait_for_service('current_detector')
         with eh(reraise=True):
-            self.change_detector = rospy.ServiceProxy('detector', DetectorSrv)
+            self.change_detector = ServiceProxy('set_detector', SetDetectorSrv)
+            self.curr_detector = ServiceProxy('current_detector',
+                                              CurrDetectorSrv)
 
     def setUp(self):
         self.received_pose = None
@@ -103,9 +109,10 @@ class TestPoseDetectorCommon(unittest.TestCase):
         # rospy.sleep(1)
 
     def set_detector(self, detector):
-        response = self.change_detector(detector)
-        if response.current_detector != detector:
-            self.fail("Couldn't change detector")
+#        response = self.change_detector(detector)
+#        if response.current_detector != detector:
+        if not self.change_detector(detector):
+            self.fail("Couldn't change detector to '{}'".format(detector))
 
 
 class TestPoseDetectorNode(TestPoseDetectorCommon):
@@ -134,6 +141,12 @@ class TestPoseDetectorNode(TestPoseDetectorCommon):
             which detector is used each moment '''
         self.fail('TODO')
 
+    def  test_service_current_detector_returns_current_detector(self):
+        for d in (STILL_D, MOVING_D, STILL_D, MOVING_D, STILL_D):
+            self.set_detector(d)
+            response = self.curr_detector()
+            self.assertEqual(d, response.current_detector)
+        
 
 if __name__ == '__main__':
     import rostest

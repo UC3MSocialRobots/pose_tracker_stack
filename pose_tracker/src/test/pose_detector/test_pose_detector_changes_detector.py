@@ -42,7 +42,8 @@ class TestPoseDetectorChangesProperly(unittest.TestCase):
                             'is_still_detector'] * 3
 
     def tearDown(self):
-        self.node.detector_srv.shutdown()
+#        self.node.curr_detector_srv.shutdown()
+#        self.node.set_detector_srv.shutdown()
         self.node.shutdown()
 
     def __fill_velocities_dataframe(self):

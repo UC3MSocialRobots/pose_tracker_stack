@@ -7,7 +7,6 @@ from rospy import (Publisher, Subscriber, Service)
 
 # from operator import (gt, lt)
 from collections import namedtuple
-# imitertools as it
 from itertools import cycle
 import pandas as pd
 
@@ -15,8 +14,12 @@ from func_utils import error_handler as eh
 from param_utils import load_params
 import circular_dataframe as cdf
 
-from pose_tracker.srv import Detector as DetectorSrv
-from pose_tracker.srv import DetectorResponse
+# from pose_tracker.srv import Detector as DetectorSrv
+# from pose_tracker.srv import DetectorResponse
+from pose_tracker.srv import CurrentDetector
+from pose_tracker.srv import CurrentDetectorResponse as CurrDetectorResponse
+from pose_tracker.srv import SetDetector
+from pose_tracker.srv import SetDetectorResponse
 from pose_msgs.msg import (PoseInstance, JointVelocities)
 from std_msgs.msg import Bool
 
@@ -100,7 +103,11 @@ class PoseDetectorNode():
         self.__moving_pub = Publisher('user_moving',
                                       JointVelocities, latch=True)
         # Services
-        self.detector_srv = Service('detector', DetectorSrv, self._detector_cb)
+#         self.detector_srv = Service('detector', DetectorSrv, self._detector_cb)
+        self.curr_detector_srv = Service('current_detector', CurrentDetector, 
+                                          self._curr_detector_cb)
+        self.set_detector_srv = Service('set_detector', SetDetector, 
+                                         self._set_detector_cb)
 
         self.velocities = pd.DataFrame()
         self.pose_instance = PoseInstance()
@@ -137,20 +144,26 @@ class PoseDetectorNode():
         self._add_msg_to_dataset(msg)
         self.check_dataset()
 
-    def __find_detector(self, dname):
-        ''' Sets detector to the specified dname.
-            Warning: assumes dname is a valid detector '''
-        while dname != self.current_detector.name:
-            self.change_detector(self.detectors)
+#    def __find_detector(self, dname):
+#        ''' Sets detector to the specified dname.
+#            Warning: assumes dname is a valid detector '''
+#        while dname != self.current_detector.name:
+#            self.change_detector(self.detectors)
 
-    def _detector_cb(self, srv):
+    def _set_detector_cb(self, srv):
         ''' Callback to handle detector operation requests'''
-        resp = DetectorResponse(self.current_detector.name, True)
-        if srv.set_detector in self.detector_names:
-            self.__find_detector(srv.set_detector)
+        resp = SetDetectorResponse(True)
+        if srv.detector_name in self.detector_names:
+            while srv.detector_name != self.current_detector.name:
+                self.change_detector(self.detectors)
+#            self.__find_detector(srv.set_detector)
         else:
             resp.success = False
         return resp
+
+    def _curr_detector_cb(self, srv):
+        ''' Callback that responds with current detector '''
+        return CurrDetectorResponse(self.current_detector.name)
 
     def __publish_is_moving_predicate(self, predicate):
         ''' Publishes a predicate indicating wether the user is moving '''
@@ -203,7 +216,8 @@ class PoseDetectorNode():
     def shutdown(self):
         ''' Closes the node '''
         try:
-            self.detector_srv.shutdown()
+            self.curr_detector_srv.shutdown()
+            self.set_detector_srv.shutdown()
         except:
             pass
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
