@@ -28,6 +28,10 @@ class DatasetNotFullError(Exception):
     pass
 
 
+class DetectorNotFound(Exception):
+    pass
+
+
 def is_dataset_full(expected_len, dataset):
     if len(dataset) != expected_len:
         raise DatasetNotFullError()
@@ -144,20 +148,22 @@ class PoseDetectorNode():
         self._add_msg_to_dataset(msg)
         self.check_dataset()
 
-#    def __find_detector(self, dname):
-#        ''' Sets detector to the specified dname.
-#            Warning: assumes dname is a valid detector '''
-#        while dname != self.current_detector.name:
-#            self.change_detector(self.detectors)
+    def set_detector(self, dname):
+        ''' Sets detector to the specified dname.
+            Raises DetectorNotFound if dname is not a valid detector '''
+        if dname not in self.detector_names:
+            raise DetectorNotFound
+        while dname != self.current_detector.name:
+            self.change_detector(self.detectors)
 
     def _set_detector_cb(self, srv):
-        ''' Callback to handle detector operation requests'''
+        ''' Callback to handle set_detector service operation requests'''
         resp = SetDetectorResponse(True)
-        if srv.detector_name in self.detector_names:
-            while srv.detector_name != self.current_detector.name:
-                self.change_detector(self.detectors)
-#            self.__find_detector(srv.set_detector)
-        else:
+        try:
+            self.set_detector(srv.detector_name)
+#            while srv.detector_name != self.current_detector.name:
+#                self.change_detector(self.detectors)
+        except DetectorNotFound:
             resp.success = False
         return resp
 

@@ -66,7 +66,7 @@ class TestPoseDetectorCommon(unittest.TestCase):
         rospy.wait_for_service('set_detector')
         rospy.wait_for_service('current_detector')
         with eh(reraise=True):
-            self.change_detector = ServiceProxy('set_detector', SetDetectorSrv)
+            self.set_detector_srv = ServiceProxy('set_detector', SetDetectorSrv)
             self.curr_detector = ServiceProxy('current_detector',
                                               CurrDetectorSrv)
 
@@ -109,9 +109,9 @@ class TestPoseDetectorCommon(unittest.TestCase):
         # rospy.sleep(1)
 
     def set_detector(self, detector):
-#        response = self.change_detector(detector)
+#        response = self.set_detector_srv(detector)
 #        if response.current_detector != detector:
-        if not self.change_detector(detector):
+        if not self.set_detector_srv(detector):
             self.fail("Couldn't change detector to '{}'".format(detector))
 
 
@@ -141,7 +141,7 @@ class TestPoseDetectorNode(TestPoseDetectorCommon):
             which detector is used each moment '''
         self.fail('TODO')
 
-    def  test_service_current_detector_returns_current_detector(self):
+    def test_service_current_detector_returns_current_detector(self):
         for d in (STILL_D, MOVING_D, STILL_D, MOVING_D, STILL_D):
             self.set_detector(d)
             response = self.curr_detector()
