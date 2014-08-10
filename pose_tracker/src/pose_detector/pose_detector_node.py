@@ -116,12 +116,6 @@ class PoseDetectorNode():
         self.velocities = pd.DataFrame()
         self.pose_instance = PoseInstance()
 
-    def get_pose_instance(self):
-        return self.pose_instance
-
-    def get_velocities(self):
-        return self.velocities
-
     def __build_detectors(self):
         ''' Helper method to create the detectors
             used to known wheter the user is still or moving'''
@@ -148,21 +142,11 @@ class PoseDetectorNode():
         self._add_msg_to_dataset(msg)
         self.check_dataset()
 
-    def set_detector(self, dname):
-        ''' Sets detector to the specified dname.
-            Raises DetectorNotFound if dname is not a valid detector '''
-        if dname not in self.detector_names:
-            raise DetectorNotFound
-        while dname != self.current_detector.name:
-            self.change_detector(self.detectors)
-
     def _set_detector_cb(self, srv):
         ''' Callback to handle set_detector service operation requests'''
         resp = SetDetectorResponse(True)
         try:
             self.set_detector(srv.detector_name)
-#            while srv.detector_name != self.current_detector.name:
-#                self.change_detector(self.detectors)
         except DetectorNotFound:
             resp.success = False
         return resp
@@ -215,6 +199,20 @@ class PoseDetectorNode():
         self.velocities = pd.DataFrame()
         loginfo("Changing detector to: {}".format(self.current_detector.name))
         return self
+    
+    def set_detector(self, dname):
+        ''' Sets detector to the specified dname.
+            Raises DetectorNotFound if dname is not a valid detector '''
+        if dname not in self.detector_names:
+            raise DetectorNotFound
+        while dname != self.current_detector.name:
+            self.change_detector(self.detectors)
+
+    def get_pose_instance(self):
+        return self.pose_instance
+
+    def get_velocities(self):
+        return self.velocities
 
     def run(self):
         rospy.spin()

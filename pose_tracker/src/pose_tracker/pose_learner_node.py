@@ -8,7 +8,7 @@ from std_msgs.msg import String
 import param_utils as pu
 from func_utils import load_class
 import pose_learner as pl
-from func_utils import error_handler
+from func_utils import error_handler as eh
 
 DEFAULT_NAME = 'pose_learner'
 PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid', 
@@ -25,7 +25,7 @@ class PoseLearnerNode():
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initializing " + self.node_name + " node...")
         
-        with error_handler(logger=logfatal, action=self.shutdown):
+        with eh(logger=logfatal, action=self.shutdown, reraise=True):
             self.load_parameters()
             self.classif = load_class(self.algorithm)()
             rospy.loginfo("Classifier loaded: {}".format(self.classif))
@@ -49,14 +49,14 @@ class PoseLearnerNode():
             raise
 
     def _learn_dataset_cb(self, dataset_file):
-        with error_handler(reraise=False):
+        with eh(reraise=False):
             self.load_dataset(dataset_file.data, self.table_name)
-            self.fit().save_clf()
+            self.fit()
+            self.save_clf()
 
     def load_dataset(self, filename, table_name):
-        with error_handler(logger=logerr, 
-                           log_msg="Couldn't load dataset {}".format(filename),
-                           errors=IOError, reraise=True):
+        with eh(logger=logerr, errors=IOError, reraise=True, 
+                log_msg="Couldn't load dataset {}".format(filename)):
             self.dataset = pl.prepare_dataset(filename, table_name) \
                            .drop(self.drop_columns, axis=1)
         return self
@@ -75,7 +75,6 @@ class PoseLearnerNode():
         self.ready_pub.publish(self.out_file)
         rospy.loginfo("Classifier saved to: {}".format(self.out_file))
         return self
-
 
 
     def run(self):

@@ -86,15 +86,19 @@ class PoseEstimatorNode():
         cols = self.dataset_columns
         return Series(unpacked, index=cols).drop(self.drop_columns, axis=1)
 
+    def _build_pose_estimated_msg(self, skels):
+        ''' Builds a L{PoseEstimated} message from a L{Skeleton msg}'''
+        epose = PoseEstimated()
+        epose.raw_instance = self._unpack_skeleton_msg(skels.skeletons[0])
+        epose.predicted_label_id = self.predict(epose.raw_instance)
+        epose.predicted_label = self.labels[epose.predicted_label_id]
+        epose.label_names = self.labels
+        epose.label_probas = self.predict_proba(epose.raw_instance)
+        return epose
+
     def skeleton_cb(self, skels):
         with eh(logger=logwarn, low_msg='Could not estimate pose. '):
-            pe_msg = PoseEstimated()
-            pe_msg.raw_instance = self._unpack_skeleton_msg(skels.skeletons[0])
-            pe_msg.predicted_label_id = self.predict(pe_msg.raw_instance)
-            pe_msg.predicted_label = self.labels[pe_msg.predicted_label_id]
-            pe_msg.label_names = self.labels
-            pe_msg.label_probas = self.predict_proba(pe_msg.raw_instance)
-
+            pe_msg = self._build_pose_estimated_msg(skels)
             self.publisher.publish(pe_msg)
 
     def get_dataset_info(self):
