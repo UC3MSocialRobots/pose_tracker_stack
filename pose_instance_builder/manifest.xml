@@ -1,0 +1,26 @@
+<package>
+  <description brief="pose_instance_builder">
+
+     Transforms from various skeleton trackers to a same instance model
+
+  </description>
+  <author>Víctor González</author>
+  <license>GPLv3</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pose_instance_builder</url>
+  
+  <depend package="rospy"/>
+  <depend package="rosunit"/>
+  <depend package="rostest"/>
+  
+  <depend package="pose_msgs"/>
+  <depend package="pose_labeler"/>
+  <depend package="rospy_utils"/>
+  
+  <!-- builders -->
+  <depend package="kinect"/>
+  <depend package="pi_tracker"/>
+
+</package>
+
+

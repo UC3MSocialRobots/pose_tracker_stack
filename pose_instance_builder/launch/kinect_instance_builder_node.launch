@@ -1,0 +1,28 @@
+<launch>
+    <arg name="robot"/>
+    <arg name="rate" default="30"/>
+    
+    <include file="$(find kinect)/launch/nite_node.launch">
+        <arg name="robot" value="$(arg robot)" />
+        <arg name="rate" value="$(arg rate)" />
+    </include>
+    
+    <group ns="$(arg robot)">
+        <rosparam command='load' file="$(find pose_labeler)/yaml/params.yaml"/>
+        <node name="pose_labeler" 
+              pkg="pose_labeler" type="pose_labeler_node.py" 
+              required="true" output="screen">
+              <param name='min_confidence' type="double" value="0.2"/>
+        </node> 
+      
+        <node name="instance_builder"
+              pkg="pose_instance_builder"
+              type="instance_builder_node.py">
+              <param name="builder_type" 
+                     value="instance_builder.KinectIBuilder" type="str" />
+              <param name="skeleton_topic" 
+                     value="/$(arg robot)/skeletons" type="str" />
+        </node>
+    </group>
+    
+</launch>

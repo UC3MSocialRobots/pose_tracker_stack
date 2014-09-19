@@ -1,0 +1,7 @@
+pose_labels: ['TURNED_RIGHT', 'TURNED_LEFT', 'TURNED_FORWARD',
+                'LOOKING_RIGHT', 'LOOKING_LEFT', 'LOOKING_FORWARD',
+                'POINTING_RIGHT', 'POINTING_LEFT', 'POINTING_FORWARD']
+pose_commands: ['START', 'CONTINUE', 'PAUSE', 'CHANGE', 'STOP', 'END']
+
+# The following maps commands to states of the pose_tracker/dataset_builder node: 
+command_mapper: {'START': 'processing', 'CONTINUE': 'processing', 'PAUSE': 'idle', 'CHANGE': 'idle', 'STOP':'finishing', 'END': 'finishing'}

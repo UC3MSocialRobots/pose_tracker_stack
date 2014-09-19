@@ -1,0 +1,8 @@
+# Service that attempts to change the current detector to a new one
+string detector_name        # Name of the detector to be set
+---
+bool success                # Predicate indicating wether the operation
+                                # has been successful or not.
+                                # If the operation is not successful, 
+                                # it means that the set_detector name
+                                # was not found in the detectors list

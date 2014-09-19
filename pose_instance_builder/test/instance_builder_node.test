@@ -1,0 +1,21 @@
+<launch>
+  <test test-name="test_instance_builder_node_with_PiTrackerIBuilder"
+        pkg="pose_instance_builder"
+        type="test_instance_builder_node.py"
+        time-limit="60.0">
+        <param name="builder_type" 
+               value="instance_builder.PiTrackerIBuilder" type="str" />
+        <param name="skeleton_topic" value="/skeleton" type="str" />
+  </test>
+
+  <test test-name="test_instance_builder_node_with_KinectIBuilder"
+        pkg="pose_instance_builder"
+        type="test_instance_builder_node.py"
+        time-limit="60.0">
+        <param name="builder_type" 
+               value="instance_builder.KinectIBuilder" type="str" />
+        <param name="skeleton_topic" value="/skeletons" type="str" />
+  </test>
+
+
+</launch>

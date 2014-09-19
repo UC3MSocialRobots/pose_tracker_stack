@@ -1,0 +1,49 @@
+<launch>
+<arg name="robot"/>
+<!--
+You can set the startup languages in a launch file
+Put the following instructions in your launch file,
+inside the XML tags <group ns="$(arg robot)"> ... </group>
+BEFORE including this file (etts_skill.launch):
+_________________________________________________
+<launch>
+<arg name="robot"/>
+<group ns="$(arg robot)">
+  ...
+  <param name="etts_language" value="fr"/>
+  <param name="etts_emotion" value="happy"/>
+  <param name="etts_primitive" value="festival"/>
+  ...
+</group>
+_________________________________________________
+Another possibility is to put the followinglines
+outside of the XML <group/> tag:
+_________________________________________________
+<launch>
+<arg name="robot"/>
+<param name="/$(arg robot)/etts_language" value="fr"/>
+<param name="/$(arg robot)/etts_emotion" value="happy"/>
+<param name="/$(arg robot)/etts_primitive" value="festival"/>
+....
+</launch>
+_________________________________________________
+-->
+<group ns="$(arg robot)">
+    <!-- Params -->
+    <param name="asr_grammar" type="string" value="pose_trainer.gram"/>
+    <rosparam command='load' file="$(find pose_labeler)/yaml/params.yaml"/>
+    <!-- Nodes -->
+    <node name="mcp_server_ros" 
+          pkg="ad_core" 
+          type="mcp_server_ros.exe" 
+          required="true" output="log"/>
+    <node name="asr_skill" 
+          pkg="asr" type="launcher_asr_skill.exe" 
+          args="--activate" 
+          required="true" output="log"/>
+    <node name="pose_labeler" 
+          pkg="pose_labeler" 
+          type="pose_labeler_node.py" 
+          required="true" output="screen"/>
+</group>
+</launch>

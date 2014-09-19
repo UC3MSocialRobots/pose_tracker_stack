@@ -1,0 +1,22 @@
+<launch>
+
+ <arg name="model" />
+
+  <!-- Main node -->
+  <node name="trainer" 
+        pkg="pose_tracker" 
+        type="pose_trainer" 
+        args="$(arg model)" 
+        required="true" 
+        output="screen">
+	<rosparam  file="$(find pose_tracker)/params/pose_trainer_params.yaml" 
+               command="load"/>
+  </node>
+
+<!--
+  <node name="skeleton_transformer" pkg="pose_tracker" type="skeleton_frame_transformer" output="screen">
+  </node>
+-->
+
+</launch>
+

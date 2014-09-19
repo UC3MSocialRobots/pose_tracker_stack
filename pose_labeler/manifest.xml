@@ -1,0 +1,19 @@
+<package>
+  <description brief="pose_labeler">
+	
+	Package with nodes that read asr_msgs and transforms to pose labels and commands
+
+  </description>
+  <author>Victor Gonzalez-Pacheco</author>
+  <license>GPL v.3</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pose_labeler</url>
+
+  <depend package="rospy"/>
+  <depend package="pose_msgs"/>
+  <depend package="asr_msgs"/>
+  
+  <depend package="rostest"/>
+</package>
+
+

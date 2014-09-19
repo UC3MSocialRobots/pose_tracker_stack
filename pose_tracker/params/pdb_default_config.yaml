@@ -1,0 +1,16 @@
+###############################################################3
+# DO NOT MODIFY THIS FILE UNLEES YOU KNOW WHAT ARE YOUR DOING! #
+###############################################################3
+
+# Template for creating  a configuration file for an experiment
+# Create your own file using the same parameters for your own experiment
+dataset: {
+    filename: '/tmp/test_dataset',
+    metadata: {
+        creator: 'Victor Gonzalez-Pacheco',
+        descr: 'Default metadata for experiments. Loaded from pose_tracker/params/pdb_default_config.yaml'
+    },
+    table_name: 'data',
+    append_to_table: false
+}
+rate: 30 # Hz

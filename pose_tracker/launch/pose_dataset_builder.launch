@@ -1,0 +1,44 @@
+<launch>
+<arg name="robot"/>
+<arg name="config" 
+     default="$(find pose_tracker)/params/pdb_default_config.yaml" />
+<!-- <arg name="rate" default="30"/>
+<arg name="dataset"/>
+<arg name="metadata" 
+       default="$(find pose_tracker)/params/default_dataset_metadata.yaml"/> -->
+
+<include file="$(find kinect)/launch/nite_node.launch">
+  <arg name="robot" value="$(arg robot)" />
+  <arg name="rate" value="$(arg rate)" />
+</include>
+
+<group ns="$(arg robot)">
+  <!-- Params -->
+  <rosparam command='load' file="$(find pose_labeler)/yaml/params.yaml"/>
+	<param name="asr_grammar" type="string" value="pose_trainer.gram"/>
+	<!-- Nodes -->
+	<node name="mcp_server_ros" 
+        pkg="ad_core" type="mcp_server_ros.exe" 
+        required="true" output="log"/>
+	<node name="asr_skill" 
+        pkg="asr" type="launcher_asr_skill.exe" 
+        args="--activate" required="true" output="log"/>
+  <node name="pose_labeler" 
+        pkg="pose_labeler" type="pose_labeler_node.py" 
+        required="true" output="screen">
+        <param name='min_confidence' type="double" value="0.2"/>
+  </node>
+  <!--<node name="skeleton_tracker" 
+        pkg="skeleton_tracker" type="skeleton_tracker" 
+        required="true"  output="screen"/>-->
+  <node name="pose_dataset_builder" 
+        pkg="pose_tracker" type="pose_dataset_builder_node.py" 
+        required="true" output="screen">
+        <!-- <param name='dataset' type="string" value="$(arg dataset)"/>
+        <param name='rate' type="int" value="$(arg rate)"/> -->
+        <rosparam command='load' file="$(arg config)"/>
+        <rosparam command='load' 
+                  file="$(find kinect)/params/kinect_default_params.yaml"/>
+  </node>
+</group>
+</launch>

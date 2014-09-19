@@ -1,0 +1,24 @@
+<package>
+  <description brief="pose_tracker">
+	Package with tools to track the pose of a human. 
+	
+  </description>
+  <author>Victor Gonzalez Pacheco vgonzale at ing.uc3m.es</author>
+  <license>GPL v3</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pose_tracker</url>
+  
+  <depend package="rospy"/>
+  <depend package="rosunit"/>
+  <depend package="rostest"/>
+  <depend package="std_msgs"/>
+  <depend package="pose_msgs"/>
+  <depend package="pose_labeler"/>
+  <!-- <depend package="pose_instance_builder"/> -->
+  <depend package="kinect"/>
+  <depend package="rospy_utils"/>
+  <!-- <depend package="roscpp"/> -->
+
+</package>
+
+

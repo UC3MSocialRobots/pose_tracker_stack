@@ -1,0 +1,29 @@
+<launch>
+  <!-- Separate group to prevent node naming collisions -->
+  <group ns="tests_change_detector">
+    <test test-name="test_pose_detector_changes_detectors_properly"
+          pkg="pose_tracker"
+          type="test_pose_detector_changes_detector.py"
+          time-limit="20.0">
+          <param name="dataframe_length" value="5" type="int" />
+          <param name="movement_threshold" value="5" type="double" /> <!-- m/s -->
+    </test>
+  </group>
+  
+  
+  <test test-name="test_pose_detector_node"
+        pkg="pose_tracker"
+        type="test_pose_detector_node.py"
+        time-limit="30.0">
+        <param name="dataframe_length" value="5" type="int" />
+        <param name="movement_threshold" value="5" type="double" /> <!-- m/s -->
+  </test>
+  
+  <!-- Nodes needed by tests -->
+  <node name="pose_detector"
+        pkg="pose_tracker"
+        type="pose_detector_node.py">
+        <param name="dataframe_length" value="5" type="int" />
+        <param name="movement_threshold" value="5" type="double" /> <!-- m/s -->
+  </node>
+</launch>
