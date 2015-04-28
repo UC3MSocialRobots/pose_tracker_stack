@@ -7,7 +7,7 @@
 <arg name="metadata" 
        default="$(find pose_tracker)/params/default_dataset_metadata.yaml"/> -->
 
-<include file="$(find kinect)/launch/nite_node.launch">
+<include file="$(find kinect)/launch/nite_node_remote.launch">
   <arg name="robot" value="$(arg robot)" />
   <arg name="rate" value="$(arg rate)" />
 </include>
