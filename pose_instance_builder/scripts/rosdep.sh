@@ -12,5 +12,5 @@ PIP_PACKAGES="numpy
 
 sudo apt-get install $PACKAGES
 
-pip install $PIP_PACKAGES
+sudo pip install $PIP_PACKAGES
 rm -rf build
