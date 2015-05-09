@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 import roslib; roslib.load_manifest('pose_tracker')
 import rospy
-from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
+from rospy import (loginfo, logerr, logfatal)
 
 import pandas as pd
 from scipy.stats import gmean as geometric_mean
 
 from func_utils import error_handler as eh
-from func_utils import load_class
+# from func_utils import load_class
 from param_utils import get_parameters, ParamNotFoundError
 import circular_dataframe as cdf
 
 from pose_instance_builder.msg import PoseInstance
-from std_msgs.msg import String
+# from std_msgs.msg import String
 
 
 _DEFAULT_NAME = 'instance_averager_node'
@@ -20,7 +20,7 @@ _NODE_PARAMS = ['builder_type', 'skeleton_topic']
 
 
 def __gmean(df):
-    ''' Returns geometric mean of a dataframe in form of a pandas.Series'''
+    """Return geometric mean of a dataframe in form of a pandas.Series."""
     return pd.Series(geometric_mean(df), index=df.columns)
 
 
@@ -30,7 +30,7 @@ METHODS = {'mean': pd.DataFrame.mean,
 
 
 def load_params(params):
-    ''' Loads parameters that will be used by the node '''
+    """Load parameters that will be used by the node."""
     try:
         for pname, pvalue in get_parameters(params):
             yield pvalue
@@ -40,11 +40,12 @@ def load_params(params):
 
 
 class InstanceAveragerNode():
-    ''' Node that processes skeleton messages and publishes them as instances
-        
-        It uses an L{InstanceBuilder} to convert the skeletons to instances.
-        @keyword nodename: The name of the node
-    '''
+    """Node that processes skeleton messages and publishes them as instances.
+
+    It uses an L{InstanceBuilder} to convert the skeletons to instances.
+
+    :keyword nodename: The name of the node
+    """
     def __init__(self, **kwargs):
         name = kwargs.get('node_name', _DEFAULT_NAME)
         rospy.init_node(name)
@@ -57,10 +58,9 @@ class InstanceAveragerNode():
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
                 action=self.shutdown, reraise=True):
-                self.method, self.dflen = load_params('averager_method', 
+                self.method, self.dflen = load_params('averager_method',
                                                       'dataframe_length')
                 self.averager = METHODS.get(self.method, METHODS['mean'])
-
 
         # Publishers and Subscribers
         rospy.Subscriber('pose_instance', PoseInstance, self.instance_cb)
@@ -69,20 +69,21 @@ class InstanceAveragerNode():
         self.df_averaged = pd.Series()
 
     def instance_cb(self, msg):
+        """Callback. Publish a PoseInstance with averaged values."""
         instance = pd.Series(msg.instance, index=msg.columns)
         self.df = cdf.append_instance(self.df, instance, self.dflen)
         self.df_averaged = self.averager(self.df)
         pinstance = PoseInstance(instance=list(self.df_averaged.values),
                                  columns=list(self.df_averaged.index))
         self.publisher.publish(pinstance)
-        
+
     def run(self):
         rospy.spin()
-    
+
     def shutdown(self):
-        ''' Closes the node ''' 
+        """Close the node."""
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
-        
+
 
 if __name__ == '__main__':
     try:
