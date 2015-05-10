@@ -40,10 +40,13 @@ _rm_stand_pref = partial(_clean_prefix, prefix='STAND_')
 
 
 def prepare_dataset(filename, group_name):
-    ''' Loads the file filename and returns all the tables contained in the
-        group 'group_name' in form of a unified dataset.
-        Prior to returning it, the dataset is grouped by pose, to
-    '''
+    """
+    Return dataset from filename.
+
+    Loads the file filename and returns all the tables contained in the
+    group 'group_name' in form of a unified dataset.
+    Prior to returning it, the dataset is grouped by pose, to
+    """
     with PoseDatasetIO(dataset=filename, columns=COLUMNS, mode='r') as dataset:
         dataset = {node._v_name: dataset.store.select(node._v_pathname).
                    groupby('pose').mean().
@@ -53,49 +56,53 @@ def prepare_dataset(filename, group_name):
 
 
 def drop_columns(dataset, cols=COLS_TO_CLEAN):
-    ''' Drops the entered dataset columns.
-        @type dataset: pandas.DataFrame
-        @param dataset: the dataset which columns are going to be dropped
-        @param cols: the list of column names to be dropped.
+    """
+    Drop the entered dataset columns.
+
+    @type dataset: pandas.DataFrame
+    @param dataset: the dataset which columns are going to be dropped
+    @param cols: the list of column names to be dropped.
                      Default: L{COLS_TO_CLEAN}
-        @return: A copy of the dataset without the columns
-    '''
+    @return: A copy of the dataset without the columns
+    """
     return dataset.drop(cols, axis=1)
 
 
 def numerize_y(y):
-    ''' Converts vector y to nums'''
+    """Convert vector y to nums."""
     labels = sorted(set(y))
     return np.array(map(labels.index, y))
 
 
 def df_to_Xy(dataframe):
-    ''' Converts a dataframe to scikitlearn's compatible X and y
-        @param dataframe: DataFrame to be converted to scikit-learn X,y format
-        @type dataframe: pandas.DataFrame
-        @return: a tuple (X, y)
-    '''
+    """Convert a dataframe to scikitlearn's compatible X and y format.
+
+    @param dataframe: DataFrame to be converted to scikit-learn X,y format
+    @type dataframe: pandas.DataFrame
+    @return: a tuple (X, y)
+    """
     y = zip(*dataframe.index)[1]
     y_num = numerize_y(y)
     return (dataframe.values, y_num)
 
 
 def fit_clf(X, y, **kwargs):
-    '''
-        Trains a classifier with the entered data
-        @param X: numpy.array of shape (m,n)
-        @type X: Dataset
-        @param y: Labels of the dataset
-        @type y: numpy array of shape (m,)
-        @keyword estimator: the full name of the algorithm to fit the dataset
-                            Should be any scikit-learn supervised algorithm
-                            that implements the fit() method.
-                            E.g. 'sklearn.ensemble.RandomForestClassifier'
-        @type estimator: string
-        @keyword param_grid: hyperparameters of the model to be optimized
-        @type param_grid: dict
-        @return: the classifier already fitted to the input data
-    '''
+    """
+    Train a classifier with the entered data.
+
+    @param X: numpy.array of shape (m,n)
+    @type X: Dataset
+    @param y: Labels of the dataset
+    @type y: numpy array of shape (m,)
+    @keyword estimator: the full name of the algorithm to fit the dataset
+                        Should be any scikit-learn supervised algorithm
+                        that implements the fit() method.
+                        E.g. 'sklearn.ensemble.RandomForestClassifier'
+    @type estimator: string
+    @keyword param_grid: hyperparameters of the model to be optimized
+    @type param_grid: dict
+    @return: the classifier already fitted to the input data
+    """
     estimator = kwargs.get('estimator', __get_default_classifier())
     if kwargs['param_grid']:
         estimator = GridSearchCV(estimator, kwargs['param_grid'],
@@ -105,25 +112,28 @@ def fit_clf(X, y, **kwargs):
 
 
 def __get_default_classifier():
-    ''' Helper function that returns a default classifier'''
+    """Return default classifier."""
     clf = load_class('sklearn.ensemble.RandomForestClassifier')
     return clf(oob_score=True)
 
 
 def save_clf(classifier, filename):
-    ''' Saves a classifier to a file
-        @param classifier: the classifier
-        @param filename: the path where to save the classifier
-    '''
+    """Save a classifier to a file.
+
+    @param classifier: the classifier
+    @param filename: the path where to save the classifier
+    """
     from sklearn.externals import joblib
     joblib.dump(classifier, filename, compress=9)
 
 
 def load_clf(filename):
-    '''Loads a classifier from a file
-       @param filename: file path where to load the classifier
-       @return: the loaded classifier.
-    '''
+    """
+    Load a classifier from a file.
+
+    @param filename: file path where to load the classifier
+    @return: the loaded classifier.
+    """
     from sklearn.externals import joblib
     loaded_model = joblib.load(filename)
     return loaded_model
