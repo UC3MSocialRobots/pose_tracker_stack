@@ -58,9 +58,9 @@ class InstanceAveragerNode():
 
         with eh(logger=logfatal, log_msg="Couldn't load parameters",
                 action=self.shutdown, reraise=True):
-                self.method, self.dflen = load_params(['averager_method',
-                                                      'dataframe_length'])
-                self.averager = METHODS.get(self.method, METHODS['mean'])
+            self.method, self.dflen = load_params(['averager_method',
+                                                  'dataframe_length'])
+            self.averager = METHODS.get(self.method, METHODS['mean'])
 
         # Publishers and Subscribers
         rospy.Subscriber('pose_instance', PoseInstance, self.instance_cb)
