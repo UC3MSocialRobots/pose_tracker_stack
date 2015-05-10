@@ -34,6 +34,7 @@ COLS_TO_CLEAN = confidences
 
 
 def _clean_prefix(text, prefix):
+    """Strip prefix of a string."""
     return text.lstrip(prefix)
 
 _rm_stand_pref = partial(_clean_prefix, prefix='STAND_')
