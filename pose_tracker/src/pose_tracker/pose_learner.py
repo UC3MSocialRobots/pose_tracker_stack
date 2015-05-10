@@ -10,6 +10,8 @@ import pandas as pd
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import f1_score
 
+from rospy_utils import load_class
+
 from PoseDatasetIO import PoseDatasetIO
 #import user_data_loader as udl
 
@@ -103,7 +105,7 @@ def fit_clf(X, y, **kwargs):
 
 def __get_default_classifier():
     ''' Helper function that returns a default classifier'''
-    clf = load_class_from_name('sklearn.ensemble.RandomForestClassifier')
+    clf = load_class('sklearn.ensemble.RandomForestClassifier')
     return clf(oob_score=True)
 
 def save_clf(classifier, filename):

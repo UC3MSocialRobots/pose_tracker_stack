@@ -175,6 +175,6 @@ class PoseDatasetIO(object):
             @rtype: dict wich values are pandas.DataFrames'''
         #return pd.concat([self.store.select(node._v_pathname)
         #                  for node in self.store.get_node(group_name)])
-        return {node._v_name: self.store.select(node._v_pathname) 
+        return {node._v_name: self.store.select(node._v_pathname)
                 for node in self.store.get_node(group_name)}
 
