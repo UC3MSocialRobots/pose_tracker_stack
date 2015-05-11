@@ -26,7 +26,7 @@ def load_params(params):
         raise
 
 
-class InstanceBuilderNode():
+class InstanceBuilderNode(object):
 
     ''' Node that processes skeleton messages and publishes them as instances
 

@@ -28,7 +28,7 @@ def _check_msg_preconditions(msg, msg_class, label):
         raise TypeError('"UNKNOWN" label')
 
 
-class IBuilder():
+class IBuilder(object):
 
     ''' Base class that defines the interface to that other builders
         should implement.
@@ -54,7 +54,7 @@ class IBuilder():
         pass
 
 
-class PiTrackerIBuilder():
+class PiTrackerIBuilder(object):
 
     ''' Instance Builder for skeletons coming from pi_tracker package'''
 
@@ -87,7 +87,7 @@ class PiTrackerIBuilder():
                 confidence)
 
 
-class KinectIBuilder():
+class KinectIBuilder(object):
 
     ''' Instance Builder for skeletons coming from kinect package'''
 
