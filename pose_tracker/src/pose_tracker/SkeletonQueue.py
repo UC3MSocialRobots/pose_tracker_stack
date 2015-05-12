@@ -11,7 +11,7 @@ import kinect.nite_skeleton_msg_utils as nsku
 class SkeletonQueue(object):
     """Class that contains a queue of skeletons
        along with operations return its eleements as a pandas.DataFrame"""
-    def __init__(self, joint_names, *args):
+    def __init__(self, joint_names):
         super(SkeletonQueue, self).__init__()
         self.skeleton_queue = col.deque([])  # stores (skeletons, label)
         self.joint_names = joint_names
@@ -69,7 +69,7 @@ class SkeletonQueue(object):
                 rospy.logdebug("Skeleton Queue got emptied. Stoping")
                 break
 
-    def _prepare_chunk(self, chunksize=50, **kwargs):
+    def _prepare_chunk(self, chunksize=50):
         ''' Yields chunksize elements from self.skeleton_queue (using popleft())
             @param chunksize: Num of elements to retrieve from the queue.
             @note: If chunksize < 0  or > len self.skeleton_queue,
