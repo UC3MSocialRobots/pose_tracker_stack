@@ -37,4 +37,5 @@ DOI = {10.3390/s130912406}
 # Quality Metrics
 [![Code Health](https://landscape.io/github/UC3MSocialRobots/pose_tracker_stack/master/landscape.svg?style=flat)](https://landscape.io/github/UC3MSocialRobots/pose_tracker_stack/master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/UC3MSocialRobots/pose_tracker_stack/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/UC3MSocialRobots/pose_tracker_stack/?branch=master)
+[![Code Climate](https://codeclimate.com/github/UC3MSocialRobots/pose_tracker_stack/badges/gpa.svg)](https://codeclimate.com/github/UC3MSocialRobots/pose_tracker_stack)
 [![Codacy Badge](https://www.codacy.com/project/badge/a044ba961d0044199b5435348e28436b)](https://www.codacy.com/app/vgonpa/pose_tracker_stack)
