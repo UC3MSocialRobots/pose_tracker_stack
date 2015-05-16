@@ -8,7 +8,8 @@ This metapackage contains a set of packages that enable a robot to learn human p
 * `pose_tracker`: Nodes that perform the learning
 * `pose_labeler`: Labeler for training
 * `pose_detector`: Nodes to detect when a user us still or moving
-* 
+* `pose_instance_builder`: Nodes and utilities to build a dataset from Kinect skeleton data
+* `pose_msgs`: Common messages for all the packages in this metapackage
 
 # Published papers:
 
