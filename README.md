@@ -13,7 +13,7 @@ This metapackage contains a set of packages that enable a robot to learn human p
 
 # Published papers:
 
-Please, if you use this work, consider to cite one or more of the following papers:
+Please, if you use this work, consider to cite paper:
 
 * Gonzalez-Pacheco, V.; Malfaz, M.; Fernandez, F.; Salichs, M.A.	[Teaching Human Poses Interactively to a Social Robot](http://www.mdpi.com/1424-8220/13/9/12406). Sensors 2013, 13, 12406-12430. 
 
