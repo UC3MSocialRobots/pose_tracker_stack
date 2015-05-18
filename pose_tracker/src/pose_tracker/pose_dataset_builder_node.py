@@ -77,7 +77,7 @@ def only_in_states(states):
     return method_wrapper
 
 
-class PoseDatasetBuilder():
+class PoseDatasetBuilder(object):
 
     """Class that builds a dataset
 
@@ -149,8 +149,8 @@ class PoseDatasetBuilder():
         """
         Return a list with dataset columns.
 
-        @note:: PoseDatasetBuilder.joint_names & PoseDatasetBuilder.attrib_names 
-                must be declared prior to call this method
+        @note: PoseDatasetBuilder.joint_names & PoseDatasetBuilder.attrib_names
+               must be declared prior to call this method
         """
         return map('_'.join, product(joint_names, attrib_names))
 
