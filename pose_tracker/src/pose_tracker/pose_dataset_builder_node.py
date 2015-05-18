@@ -311,7 +311,7 @@ class PoseDatasetBuilder(object):
         # After the first time we write, we append the data
         self.append_data = True
 
-    def _write_from_queue(self, items, table_name, append, **kwargs):
+    def _write_from_queue(self, items, table_name, append):
         df = self.skeleton_queue.pop_n_to_DataFrame(
             items, self.dataset_columns)
         self.data_writer.write(table_name, df, table=True, append=append)
