@@ -336,7 +336,7 @@ class PoseDatasetBuilder(object):
             self._write_labels_to_file('used_labels')
             self.data_writer.close()  # Close the file
             self.ready_pub.publish(self.dataset_name)
-        except:
+        except Exception:
             logdebug("Finishing. File is already closed")
         self.change_state(STATE_END)
         self.run_state(STATE_END)
@@ -373,7 +373,7 @@ class PoseDatasetBuilder(object):
             @param state: is the state to run. It must be in L{ALL_STATES} """
         try:
             self.states.get(self.change_state(state), None)()
-        except:
+        except Exception:
             pass
 
     def run_current_state(self):
@@ -404,7 +404,7 @@ class PoseDatasetBuilder(object):
         try:
             self.state_srv.shutdown()
             self.dsinfo_srv.shutdown()
-        except:
+        except Exception:
             pass
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
 
