@@ -34,7 +34,7 @@ ALL_STATES = ( STATE_INIT, STATE_IDLE, STATE_PROCESSING,
                STATE_FINISHING, STATE_END)
 
 def only_in_states(states):
-    '''Decorator method that ensures that decorated method is
+    """Decorator method that ensures that decorated method is
        only called in the entered states.
 
        @param states: 'A list of the states in which the decorated method will be called'
@@ -53,7 +53,7 @@ def only_in_states(states):
             >>> klass.curr_state = 'state_1'
             >>> klass.f1() 
             ... 'f1 called!'
-    '''
+    """
     # Helper func to convert an object to an iterable (unless already it is one)
     states = set(as_iter(states))
     
@@ -71,10 +71,10 @@ def only_in_states(states):
 
 
 class PoseDatasetBuilder():
-    ''' Class that builds a dataset
+    """ Class that builds a dataset
 
         @keyword nodename: The name of the node
-    '''
+    """
     def __init__(self, **kwargs):
         name = kwargs.get('node_name', DEFAULT_NAME)
         rospy.init_node(name)
@@ -135,13 +135,13 @@ class PoseDatasetBuilder():
         self.skeleton_queue = skq.SkeletonQueue(self.joint_names) 
 
     def _combine_joints_attribs(self, joint_names, attrib_names):
-        ''' Helper method that returs a list with dataset columns.
+        """ Helper method that returs a list with dataset columns.
         @note:: PoseDatasetBuilder.joint_names and PoseDatasetBuilder.attrib_names 
-                must be declared prior to call this method '''
+                must be declared prior to call this method """
         return map('_'.join, product(joint_names, attrib_names))
 
     def load_parameters(self):
-        ''' Loads all the parameters from the ros master'''
+        """ Loads all the parameters from the ros master"""
         all_params = pu.get_parameters(PARAM_NAMES)
         logger = logwarn
 
@@ -197,15 +197,15 @@ class PoseDatasetBuilder():
 
     @preconditions(_command_cb_preconditions, logger=loginfo, reraise=False)
     def command_callback(self, command):
-        ''' Processes the received command and sets the current state 
+        """ Processes the received command and sets the current state 
             according to this command.
             See self.command_mapper dict to know the command->state mappings
-        '''
+        """
         self.change_state(self.command_mapper[command.data])
         
     @only_in_states(STATE_PROCESSING)
     def label_callback(self, label):
-        ''' Updates the label of the received data ''' 
+        """ Updates the label of the received data """ 
         self.current_label = label.data
         loginfo("Received label:" + self.current_label)
         if label.data != 'UNKNOWN':
@@ -224,7 +224,7 @@ class PoseDatasetBuilder():
     @preconditions(_skeleton_cb_preconditions, logger=loginfo, reraise=False)
     @only_in_states(STATE_PROCESSING)
     def skeleton_callback(self, skeletons):
-        ''' Adds the received skeletons message to the queue
+        """ Adds the received skeletons message to the queue
             together with the current label in a form of:
             tuple (skeleton, label)
             
@@ -234,18 +234,18 @@ class PoseDatasetBuilder():
               - Label != "UNKNOWN" 
             @param skeletons: The skeletons message to be added to the queue
             @type skeletons: kinect.msg.NiteSkeletonList
-        '''
+        """
         self.skeleton_queue.append(skeletons, self.current_label)
 
     def handle_state_srv(self):
-        ''' Service callback to respond the request asking the current state.'''
+        """ Service callback to respond the request asking the current state."""
         return State.StateResponse(self.curr_state)
 
     def handle_dsinfo_srv(self):
-        ''' Service callback that returns some information 
+        """ Service callback that returns some information 
             of the dataset being used.
             @see L{DatasetInfo} service
-        '''
+        """
         filename = ''
         if self.curr_state == STATE_END:
             filename = self.dataset_name
@@ -254,7 +254,7 @@ class PoseDatasetBuilder():
                                                sorted(self.all_labels))
 
     def create_dataset(self):
-        '''Creates dataset file and fills metadata.'''
+        """Creates dataset file and fills metadata."""
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
         self.dataset_metadata['date'] = pdio.parse_date(now)
         # Preparing dataset file     
@@ -266,14 +266,14 @@ class PoseDatasetBuilder():
 
     # --- State functions --- 
     def state_initiating(self):
-        ''' Initial state. 
-            Transitional state that creates dataset and changes state to IDLE'''
+        """ Initial state. 
+            Transitional state that creates dataset and changes state to IDLE"""
         logdebug('State: Initiating')
         self.create_dataset()
         self.change_state(STATE_IDLE)
         
     def state_idle(self):
-        ''' Performs operations of the sate "idle"'''
+        """ Performs operations of the sate "idle""""
         # loginfo('State: Idle')
         pass
 
@@ -285,7 +285,7 @@ class PoseDatasetBuilder():
     
     @preconditions(_state_processing_precons, logger=logdebug, reraise=False)
     def state_processing(self):
-        ''' Processes skeletons from the queue and adds them to the dataset'''
+        """ Processes skeletons from the queue and adds them to the dataset"""
         logdebug('State: Processing')
         # We process one chunk per second
         self._write_from_queue(self.rate, self.table_name, self.append_data)
@@ -297,15 +297,15 @@ class PoseDatasetBuilder():
         self.data_writer.write(table_name, df, table=True, append=append)
 
     def _write_labels_to_file(self, table_name):
-        '''Helper method that writes all labels to dataset  
+        """Helper method that writes all labels to dataset  
            
            @param table_name: the name of the table 
-                              where the labels will be stored'''
+                              where the labels will be stored"""
         self.data_writer.write(table_name, pd.Series(list(self.all_labels)))
 
     def state_finishing(self):
-        ''' Transitionalstate to state_end.
-            Dumps remaining skeletons to the dataset and closes the file'''
+        """ Transitionalstate to state_end.
+            Dumps remaining skeletons to the dataset and closes the file"""
         loginfo('State: finishing')
         try:
             # Write to the file the remaining skeletons of the queue
@@ -319,7 +319,7 @@ class PoseDatasetBuilder():
         self.run_state(STATE_END)
 
     def state_end(self):
-        ''' Final state of the state machine. Does nothing '''
+        """ Final state of the state machine. Does nothing """
         loginfo('State: END')
 
     def _change_state_preconditions(self, new_state):
@@ -331,32 +331,32 @@ class PoseDatasetBuilder():
     
     @preconditions(_change_state_preconditions, logger=logdebug, reraise=False)   
     def change_state(self, new_state):
-        ''' Tries to change the current state. 
+        """ Tries to change the current state. 
             If the state change is not allowed, it does nothing.
 
             @param new_state: the new state to be set. Should be included in 
                               I{ALL_STATES}
             @return: None if change cannot be done or current state if succeeds
-        '''
+        """
         self.curr_state = new_state
         self.state_pub.publish(self.curr_state)
         logdebug("State changed to " + self.curr_state)       
         return self.curr_state          
 
     def run_state(self, state):
-        ''' Changes the state and runs it.
-            @param state: is the state to run. It must be in L{ALL_STATES} '''
+        """ Changes the state and runs it.
+            @param state: is the state to run. It must be in L{ALL_STATES} """
         try:
             self.states.get(self.change_state(state), None)()
         except:
             pass
         
     def run_current_state(self): 
-        ''' Executes the method corresponding to the current state '''
+        """ Executes the method corresponding to the current state """
         self.states[self.curr_state]()
 
     def state_machine(self):
-        ''' Executes the state machine'''
+        """ Executes the state machine"""
         while not rospy.is_shutdown():
             if self.curr_state != STATE_END:
                 self.run_current_state()
@@ -364,18 +364,18 @@ class PoseDatasetBuilder():
 
 
     # def __get_closest_skeleton(self, skeletons, joint="torso"):
-    #     ''' Returns the closest skeleton by comparing 
+    #     """ Returns the closest skeleton by comparing 
     #         the z position of a list of skeletons
     #         Input: skeletons - The list of skeletons
     #         Input: joint="torso" - The joint which is used to compare skeletons
     #         Return: The index of the closest skeleton
-    #     '''
+    #     """
     #     # TODO
     #     pass
 
     
     def shutdown(self):
-        ''' Closes the node ''' 
+        """ Closes the node """ 
         if self.curr_state != STATE_END:
             self.states[STATE_FINISHING]()
         try:
