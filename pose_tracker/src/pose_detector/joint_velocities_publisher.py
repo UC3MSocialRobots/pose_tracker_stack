@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import roslib; roslib.load_manifest('pose_tracker')
 import rospy
-from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
+from rospy import (loginfo, logerr, logfatal)
 
 import pandas as pd
 
@@ -15,9 +15,9 @@ _DEFAULT_NAME = 'joint_velocities_publisher'
 
 
 def load_params(params):
-    ''' Loads parameters that will be used by the node '''
+    """Load parameters that will be used by the node."""
     try:
-        for pname, pvalue in get_parameters(params):
+        for _, pvalue in get_parameters(params):
             yield pvalue
     except ParamNotFoundError, e:
         logerr(e)
@@ -25,24 +25,26 @@ def load_params(params):
 
 
 def calc_velocities(df):
-    ''' Function that calculates velocities of an 
-        input Dataframe with PoseInstances '''
+    """Calculate velocities of an input Dataframe with PoseInstances."""
     if not all(df.shape):
         raise ValueError("DataFrame is empty")
     return (df.iloc[-1].values - df.iloc[0].values) / len(df)
 
 
-class JointVelocitiesPublisher():
-    ''' Node that calculates joint velocities from L{PoseInstance} messages
-        
+class JointVelocitiesPublisher(object):
+
+    """Node that calculates joint velocities from L{PoseInstance} messages.
+
         Note velocity is calculated not by time, but considering the number
         of received pose num_instances
 
         Loaded Parameters:
         ------------------
         'num_instances': num of pose_instances to calculate the velocity
-    '''
+    """
+
     def __init__(self, **kwargs):
+        """Constructor."""
         name = kwargs.get('node_name', _DEFAULT_NAME)
         rospy.init_node(name)
         self.node_name = rospy.get_name()
@@ -59,23 +61,25 @@ class JointVelocitiesPublisher():
         self.df = pd.DataFrame()
 
     def instance_cb(self, msg):
+        """Callback."""
         instance = pd.Series(msg.instance, index=msg.columns)
         self.df = cdf.append_instance(self.df, instance, self.df_length)
-        
+
         with eh(logger=loginfo, errors=ValueError,
                 log_msg='Empty DataFrame. Velocities not published'):
             vels = calc_velocities(self.df)
             velocities = JointVelocities(velocities=vels.tolist(),
                                          columns=self.df.columns.tolist())
             self.publisher.publish(velocities)
-        
+
     def run(self):
+        """rospy.spin() interface."""
         rospy.spin()
-    
+
     def shutdown(self):
-        ''' Closes the node ''' 
+        """Close the node."""
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
-        
+
 
 if __name__ == '__main__':
     try:
