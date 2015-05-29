@@ -22,7 +22,7 @@ DEFAULT_NAME = 'pose_estimator'
 PARAMS = ('estimator_file', 'dataset_columns', 'drop_columns', 'labels')
 
 
-class PoseEstimatorNode():
+class PoseEstimatorNode(object):
 
     """
     Class that builds the node.
