@@ -24,12 +24,11 @@ PARAMS = ('estimator_file', 'dataset_columns', 'drop_columns', 'labels')
 
 class PoseEstimatorNode(object):
 
-    """
-    Class that builds the node.
-    """
+    """Class that builds the node."""
 
     def __init__(self, **kwargs):
-        """Constructor.
+        """
+        Constructor.
 
         @keyword node_name: The name of the node.
         """
