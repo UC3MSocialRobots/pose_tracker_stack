@@ -41,7 +41,7 @@ class PoseEstimatorNode():
         with eh(action=self.shutdown):
             self.load_parameters()
 
-         # Subscriber
+        # Subscriber
         rospy.Subscriber("skeletons", kin.NiteSkeletonList, self.skeleton_cb)
 
         # Publishers
@@ -49,7 +49,7 @@ class PoseEstimatorNode():
 
     def load_parameters(self):
         """
-        Loads the parameters needed by the node.
+        Load the parameters needed by the node.
 
         The node acquires new attribs with the name of the loaded params
         """
@@ -64,7 +64,7 @@ class PoseEstimatorNode():
 
     def load_estimator(self, filename=None):
         """
-        Loads an estimator from file
+        Load an estimator from file.
 
         @param filename: the file name of the file storing the estimator
                          Default: self.estimator_file
@@ -77,23 +77,24 @@ class PoseEstimatorNode():
 
     def predict(self, instance):
         """
-        Predicts the output for an instance
+        Predict the output for an instance.
 
         @TODO: fill this method
         """
         return self.estimator.predict(instance)
 
     def predict_proba(self, instance):
+        """Return prediction probabilities."""
         return self.estimator.predict_proba(instance)
 
     def _unpack_skeleton_msg(self, skel_msg):
-        """Converts a NiteskeletonMsg to a list to a pandas.Series"""
+        """Convert a NiteskeletonMsg to a list to a pandas.Series."""
         unpacked = list(nsku.unpack_skeleton_msg(skel_msg)[1])
         cols = self.dataset_columns
         return Series(unpacked, index=cols).drop(self.drop_columns, axis=1)
 
     def _build_pose_estimated_msg(self, skels):
-        """Builds a L{PoseEstimated} message from a L{Skeleton msg}"""
+        """Build a L{PoseEstimated} message from a L{Skeleton msg}."""
         epose = PoseEstimated()
         epose.raw_instance = self._unpack_skeleton_msg(skels.skeletons[0])
         epose.predicted_label_id = self.predict(epose.raw_instance)
@@ -103,13 +104,13 @@ class PoseEstimatorNode():
         return epose
 
     def skeleton_cb(self, skels):
+        """Callback for skeleton messages."""
         with eh(logger=logwarn, low_msg='Could not estimate pose. '):
             pe_msg = self._build_pose_estimated_msg(skels)
             self.publisher.publish(pe_msg)
 
     def get_dataset_info(self):
-        """Service client to get information of the dataset used for learning
-        """
+        """Service client to get the dataset information used for learning."""
         rospy.wait_for_service('dataset_info')
         with eh(loginfo, log_msg="Service call failed: ",
                 errors=rospy.ServiceException):
@@ -118,12 +119,12 @@ class PoseEstimatorNode():
             return response.filename, response.columns, response.labels
 
     def run(self):
-        """Runs the node until shutdowns"""
+        """Run the node until shutdown."""
         while not rospy.is_shutdown():
             rospy.spin()
 
     def shutdown(self):
-        """Closes the node """
+        """Close the node."""
         rospy.loginfo('Shutting down ' + rospy.get_name() + ' node')
 
 
