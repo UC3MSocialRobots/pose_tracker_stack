@@ -24,12 +24,15 @@ PARAMS = ('estimator_file', 'dataset_columns', 'drop_columns', 'labels')
 
 class PoseEstimatorNode():
 
-    """ Class that builds the node
-
-        @keyword node_name: The name of the node
+    """
+    Class that builds the node.
     """
 
     def __init__(self, **kwargs):
+        """Constructor.
+
+        @keyword node_name: The name of the node.
+        """
         self.node_name = kwargs.get('node_name', DEFAULT_NAME)
         rospy.init_node(self.node_name)
         rospy.on_shutdown(self.shutdown)
@@ -45,9 +48,10 @@ class PoseEstimatorNode():
         self.publisher = rospy.Publisher('pose_estimated', PoseEstimated)
 
     def load_parameters(self):
-        """ Loads the parameters needed by the node.
+        """
+        Loads the parameters needed by the node.
 
-            The node acquires new attribs with the name of the loaded params
+        The node acquires new attribs with the name of the loaded params
         """
         try:
             params = pu.get_parameters(PARAMS)
@@ -59,12 +63,13 @@ class PoseEstimatorNode():
             raise
 
     def load_estimator(self, filename=None):
-        """ Loads an estimator from file
+        """
+        Loads an estimator from file
 
-            @param filename: the file name of the file storing the estimator
-                             Default: self.estimator_file
-            @type filename: string
-            @return: the estimator loaded from the file"""
+        @param filename: the file name of the file storing the estimator
+                         Default: self.estimator_file
+        @type filename: string
+        @return: the estimator loaded from the file"""
         if not filename:
             filename = self.estimator_file
         self.estimator = pl.load_clf(filename)
@@ -72,8 +77,9 @@ class PoseEstimatorNode():
 
     def predict(self, instance):
         """
-            Predicts the output for an instance
-            @TODO: fill this method
+        Predicts the output for an instance
+
+        @TODO: fill this method
         """
         return self.estimator.predict(instance)
 
@@ -81,13 +87,13 @@ class PoseEstimatorNode():
         return self.estimator.predict_proba(instance)
 
     def _unpack_skeleton_msg(self, skel_msg):
-        """ Converts a NiteskeletonMsg to a list to a pandas.Series"""
+        """Converts a NiteskeletonMsg to a list to a pandas.Series"""
         unpacked = list(nsku.unpack_skeleton_msg(skel_msg)[1])
         cols = self.dataset_columns
         return Series(unpacked, index=cols).drop(self.drop_columns, axis=1)
 
     def _build_pose_estimated_msg(self, skels):
-        """ Builds a L{PoseEstimated} message from a L{Skeleton msg}"""
+        """Builds a L{PoseEstimated} message from a L{Skeleton msg}"""
         epose = PoseEstimated()
         epose.raw_instance = self._unpack_skeleton_msg(skels.skeletons[0])
         epose.predicted_label_id = self.predict(epose.raw_instance)
@@ -102,7 +108,7 @@ class PoseEstimatorNode():
             self.publisher.publish(pe_msg)
 
     def get_dataset_info(self):
-        """ Service client to get information of the dataset used for learning
+        """Service client to get information of the dataset used for learning
         """
         rospy.wait_for_service('dataset_info')
         with eh(loginfo, log_msg="Service call failed: ",
@@ -112,12 +118,12 @@ class PoseEstimatorNode():
             return response.filename, response.columns, response.labels
 
     def run(self):
-        """ Runs the node until shutdowns"""
+        """Runs the node until shutdowns"""
         while not rospy.is_shutdown():
             rospy.spin()
 
     def shutdown(self):
-        """ Closes the node """
+        """Closes the node """
         rospy.loginfo('Shutting down ' + rospy.get_name() + ' node')
 
 
