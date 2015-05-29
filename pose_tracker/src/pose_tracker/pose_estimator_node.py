@@ -3,7 +3,7 @@
 import roslib
 roslib.load_manifest('pose_tracker')
 import rospy
-from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
+from rospy import (logdebug, loginfo, logwarn)
 
 from pandas import Series
 
