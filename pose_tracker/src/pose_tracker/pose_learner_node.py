@@ -3,7 +3,7 @@
 import roslib
 roslib.load_manifest('pose_tracker')
 import rospy
-from rospy import (logdebug, logerr, logfatal)
+from rospy import (logerr, logfatal)
 from std_msgs.msg import String
 
 import param_utils as pu
@@ -40,9 +40,10 @@ class PoseLearnerNode():
         self.ready_pub = rospy.Publisher('~classifier_ready', String)
 
     def load_parameters(self):
-        """ Loads the parameters needed by the node.
+        """
+        Load the parameters needed by the node.
 
-            The node will acquire new attribs with the name of the loaded params
+        The node will acquire new attribs with the name of the loaded params
         """
         try:
             params = pu.get_parameters(PARAMS)
@@ -54,12 +55,14 @@ class PoseLearnerNode():
             raise
 
     def _learn_dataset_cb(self, dataset_file):
+        """Callback to learn dataset."""
         with eh(reraise=False):
             self.load_dataset(dataset_file.data, self.table_name)
             self.fit()
             self.save_clf()
 
     def load_dataset(self, filename, table_name):
+        """Load dataset from filename."""
         with eh(logger=logerr, errors=IOError, reraise=True,
                 log_msg="Couldn't load dataset {}".format(filename)):
             self.dataset = pl.prepare_dataset(filename, table_name) \
@@ -67,7 +70,7 @@ class PoseLearnerNode():
         return self
 
     def fit(self):
-        """ Fits the classifier to the dataset data"""
+        """Fit the classifier to the dataset data."""
         X, y = pl.df_to_Xy(self.dataset)
         self.classif = pl.fit_clf(X, y,
                                   param_grid=self.parameter_grid,
@@ -75,19 +78,19 @@ class PoseLearnerNode():
         return self
 
     def save_clf(self):
-        """ Saves the best estimator to a file """
+        """Save the best estimator to a file."""
         pl.save_clf(self.classif.best_estimator_, self.out_file)
         self.ready_pub.publish(self.out_file)
         rospy.loginfo("Classifier saved to: {}".format(self.out_file))
         return self
 
     def run(self):
-        """ Runs the node until shutdowns"""
+        """Run the node until shutdowns."""
         while not rospy.is_shutdown():
             rospy.spin()
 
     def shutdown(self):
-        """ Closes the node """
+        """Close the node."""
         rospy.loginfo('Shutting down ' + rospy.get_name() + ' node')
 
 
