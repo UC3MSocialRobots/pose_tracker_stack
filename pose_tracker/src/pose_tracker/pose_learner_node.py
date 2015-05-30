@@ -15,10 +15,10 @@ PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid',
           'out_file', 'drop_columns')
 
 class PoseLearnerNode():
-    ''' Class that builds
+    """ Class that builds
 
         @keyword node_name: The name of the node
-    '''
+    """
     def __init__(self, **kwargs):
         self.node_name = kwargs.get('node_name', DEFAULT_NAME)
         rospy.init_node(self.node_name)
@@ -35,10 +35,10 @@ class PoseLearnerNode():
         self.ready_pub = rospy.Publisher('~classifier_ready', String)
 
     def load_parameters(self):
-        ''' Loads the parameters needed by the node.
+        """ Loads the parameters needed by the node.
 
             The node will acquire new attribs with the name of the loaded params
-        '''
+        """
         try:
             params = pu.get_parameters(PARAMS)
             for p in params:
@@ -62,7 +62,7 @@ class PoseLearnerNode():
         return self
         
     def fit(self):
-        ''' Fits the classifier to the dataset data'''
+        """ Fits the classifier to the dataset data"""
         X, y = pl.df_to_Xy(self.dataset)
         self.classif = pl.fit_clf(X, y, 
                                 param_grid=self.parameter_grid, 
@@ -70,7 +70,7 @@ class PoseLearnerNode():
         return self
 
     def save_clf(self):
-        ''' Saves the best estimator to a file '''
+        """ Saves the best estimator to a file """
         pl.save_clf(self.classif.best_estimator_, self.out_file)
         self.ready_pub.publish(self.out_file)
         rospy.loginfo("Classifier saved to: {}".format(self.out_file))
@@ -78,12 +78,12 @@ class PoseLearnerNode():
 
 
     def run(self):
-        ''' Runs the node until shutdowns'''
+        """ Runs the node until shutdowns"""
         while not rospy.is_shutdown():
             rospy.spin()
 
     def shutdown(self):
-        ''' Closes the node ''' 
+        """ Closes the node """ 
         rospy.loginfo('Shutting down ' + rospy.get_name() + ' node')
 
 
