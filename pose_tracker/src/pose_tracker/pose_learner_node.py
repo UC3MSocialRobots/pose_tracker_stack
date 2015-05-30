@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import roslib; roslib.load_manifest('pose_tracker')
+import roslib
+roslib.load_manifest('pose_tracker')
 import rospy
-from rospy import (logdebug, loginfo, logwarn, logerr, logfatal)
+from rospy import (logdebug, logerr, logfatal)
 from std_msgs.msg import String
 
 import param_utils as pu
@@ -11,25 +12,29 @@ import pose_learner as pl
 from func_utils import error_handler as eh
 
 DEFAULT_NAME = 'pose_learner'
-PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid', 
+PARAMS = ('dataset_file', 'table_name', 'algorithm', 'parameter_grid',
           'out_file', 'drop_columns')
 
+
 class PoseLearnerNode():
+
     """ Class that builds
 
         @keyword node_name: The name of the node
     """
+
     def __init__(self, **kwargs):
         self.node_name = kwargs.get('node_name', DEFAULT_NAME)
         rospy.init_node(self.node_name)
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initializing " + self.node_name + " node...")
-        
+
         with eh(logger=logfatal, action=self.shutdown, reraise=True):
             self.load_parameters()
             self.classif = load_class(self.algorithm)()
             rospy.loginfo("Classifier loaded: {}".format(self.classif))
-            self.load_dataset(self.dataset_file, self.table_name).fit().save_clf()        
+            self.load_dataset(self.dataset_file, self.table_name)
+            self.fit().save_clf()
 
         rospy.Subscriber("~learn_this", String, self._learn_dataset_cb)
         self.ready_pub = rospy.Publisher('~classifier_ready', String)
@@ -55,18 +60,18 @@ class PoseLearnerNode():
             self.save_clf()
 
     def load_dataset(self, filename, table_name):
-        with eh(logger=logerr, errors=IOError, reraise=True, 
+        with eh(logger=logerr, errors=IOError, reraise=True,
                 log_msg="Couldn't load dataset {}".format(filename)):
             self.dataset = pl.prepare_dataset(filename, table_name) \
-                           .drop(self.drop_columns, axis=1)
+                .drop(self.drop_columns, axis=1)
         return self
-        
+
     def fit(self):
         """ Fits the classifier to the dataset data"""
         X, y = pl.df_to_Xy(self.dataset)
-        self.classif = pl.fit_clf(X, y, 
-                                param_grid=self.parameter_grid, 
-                                estimator=self.classif)
+        self.classif = pl.fit_clf(X, y,
+                                  param_grid=self.parameter_grid,
+                                  estimator=self.classif)
         return self
 
     def save_clf(self):
@@ -76,14 +81,13 @@ class PoseLearnerNode():
         rospy.loginfo("Classifier saved to: {}".format(self.out_file))
         return self
 
-
     def run(self):
         """ Runs the node until shutdowns"""
         while not rospy.is_shutdown():
             rospy.spin()
 
     def shutdown(self):
-        """ Closes the node """ 
+        """ Closes the node """
         rospy.loginfo('Shutting down ' + rospy.get_name() + ' node')
 
 
