@@ -15,7 +15,7 @@ import kinect.nite_skeleton_msg_utils as nsku
 
 
 def _check_msg_preconditions(msg, msg_class, label):
-    ''' Processes some preconditions for incoming messages '''
+    """ Processes some preconditions for incoming messages """
     # Check message type
     if not isinstance(msg, msg_class):
         raise TypeError("Messge not a {}.msg".format(msg_class()))
@@ -30,33 +30,33 @@ def _check_msg_preconditions(msg, msg_class, label):
 
 class IBuilder(object):
 
-    ''' Base class that defines the interface to that other builders
+    """ Base class that defines the interface to that other builders
         should implement.
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
         pass
 
     def get_msg_class(self):
-        ''' Should return the class of the skeleton message
+        """ Should return the class of the skeleton message
             that the builder is able to parse
-        '''
+        """
         pass
 
     def parse_msg(self, msg, label):
-        ''' Gets msg and returns an instance message
+        """ Gets msg and returns an instance message
             @param msg: The message to be converted to a PoseInstance
                         Each Builder will be able to process a single msg type
                         Thus, the type of msg will depend on the Builder.
             @return: The instance message filled with the msg data
             @rtype: pose_instance_builder.msg.PoseInstance
-        '''
+        """
         pass
 
 
 class PiTrackerIBuilder(object):
 
-    ''' Instance Builder for skeletons coming from pi_tracker package'''
+    """ Instance Builder for skeletons coming from pi_tracker package"""
 
     def __init__(self, *args, **kwargs):
         pass
@@ -65,14 +65,14 @@ class PiTrackerIBuilder(object):
         return Skeleton
 
     def parse_msg(self, msg, label):
-        ''' Parses a pi_tracker.msg.Skeleton message and converts it to a
+        """ Parses a pi_tracker.msg.Skeleton message and converts it to a
             L{PoseInstance} message
             @name msg: The message to be parsed
             @type msg: pi_tracker.msg.Skeleton
             @return: The instance message already formatted
             @rtype: pose_instance_builder.msg.PoseInstance
             @raise TypeError if preconditions fail
-        '''
+        """
         _check_msg_preconditions(msg, self.get_msg_class(), label)
 
         msg_fields = izip(msg.position, msg.orientation, msg.confidence)
@@ -89,7 +89,7 @@ class PiTrackerIBuilder(object):
 
 class KinectIBuilder(object):
 
-    ''' Instance Builder for skeletons coming from kinect package'''
+    """ Instance Builder for skeletons coming from kinect package"""
 
     def __init__(self):
         self.joints = ['head', 'neck', 'torso',
@@ -108,14 +108,14 @@ class KinectIBuilder(object):
         return NiteSkeletonList
 
     def parse_msg(self, msg, label):
-        ''' converts a NiteSkeletonList message to a PoseInstance message
+        """ converts a NiteSkeletonList message to a PoseInstance message
 
             @raise: TypeError if preconditions fail
             @param msg: the NiteSkeletonList message
             @type msg: NiteSkeletonList
             @param label: the label to add to the PoseInstance message
             @type label: str
-            @return: a PoseInstance message '''
+            @return: a PoseInstance message """
         self._check_parse_msg_preconditions(msg, label)
         skel = msg.skeletons[0]   # only parse the first skeleton
         instance, _ = nsku.unpack_skeleton_msg(skel)
@@ -124,7 +124,7 @@ class KinectIBuilder(object):
                             instance=list(instance))
 
     def _check_parse_msg_preconditions(self, msg, label):
-        ''' Helper method to check if all preconditions hold'''
+        """ Helper method to check if all preconditions hold"""
         _check_msg_preconditions(msg, self.get_msg_class(), label)
         if not msg.skeletons:
             raise TypeError("Received a message with no skeletons")
