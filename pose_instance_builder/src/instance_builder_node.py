@@ -17,7 +17,7 @@ _NODE_PARAMS = ['builder_type', 'skeleton_topic']
 
 
 def load_params(params):
-    ''' loads parameters that will be used by the node '''
+    """ loads parameters that will be used by the node """
     try:
         for _, pvalue in get_parameters(params):
             yield pvalue
@@ -28,11 +28,11 @@ def load_params(params):
 
 class InstanceBuilderNode(object):
 
-    ''' Node that processes skeleton messages and publishes them as instances
+    """ Node that processes skeleton messages and publishes them as instances
 
         It uses an L{InstanceBuilder} to convert the skeletons to instances.
         @keyword nodename: The name of the node
-    '''
+    """
 
     def __init__(self, **kwargs):
         name = kwargs.get('node_name', _DEFAULT_NAME)
@@ -69,7 +69,7 @@ class InstanceBuilderNode(object):
         rospy.spin()
 
     def shutdown(self):
-        ''' Closes the node '''
+        """ Closes the node """
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
 
 
