@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""
+Node that processes skeleton messages and publishes them as instances.
+
+:author: Victor Gonzalez
+"""
+
 import roslib
 roslib.load_manifest('pose_instance_builder')
 import rospy
