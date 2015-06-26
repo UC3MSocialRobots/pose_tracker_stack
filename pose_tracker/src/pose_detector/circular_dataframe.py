@@ -5,16 +5,14 @@ Functions to give circular behaviour to pandas.Dataframe
 Functions to give circular behaviour to pandas.Dataframe
 I.e. A circular dataframe pops first row when new rows are added
 
-@author: Victor Gonzalez Pacheco
-@date: 2014-05
+:author: Victor Gonzalez Pacheco
+:date: 2014-05
 """
-# import roslib; roslib.load_manifest('pose_instance_builder')
-
 import pandas as pd
 
 
 def _drop_older_rows(df, max_dflen):
-    """Drops n elements of the header where n = len(df) - max_dflen."""
+    """Drop ``n`` elements of the header where ``n = len(df) - max_dflen``."""
     if max_dflen <= 0:
         return df
     df_ = df
@@ -25,16 +23,23 @@ def _drop_older_rows(df, max_dflen):
 
 
 def append_instance(df, ins, max_dflen=50):
-    """Append an instance to the dataset 'df'.
+    """Append an instance to the dataset ``df``.
 
-        @param df: dataset at which the instance is added.
-        @type df: pandas.DataFrame
-        @param ins: Instance to be added to DataFrame
-        @type ins: numpy.ndarray (1D)
-        @param max_dflen: (Default 50) Max lenght of the dataframe
-                    If len(df) > 1 then drops first elem of df.
-        @return: a dataframe with the instance added to the end
-        @rtype: pandas.DataFrame
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        dataset at which the instance is added.
+    ins : numpy.ndarray (1D)
+        Instance to be added to DataFrame
+
+    max_dflen: {int} (Default 50)
+        Max length of the dataframe.
+        If ``len(df) > 1`` then drops first elem of df.
+
+    Returns
+    -------
+    pandas.DataFrame
+        a dataframe with the instance added to the end
     """
     if ins.ndim != 1:
         raise ValueError("'ins' is not 1D. Shape: {}".format(ins.shape))
