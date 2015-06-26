@@ -31,7 +31,6 @@ def append_instance(df, ins, max_dflen=50):
         dataset at which the instance is added.
     ins : numpy.ndarray (1D)
         Instance to be added to DataFrame
-
     max_dflen: {int} (Default 50)
         Max length of the dataframe.
         If ``len(df) > 1`` then drops first elem of df.
