@@ -85,6 +85,7 @@ class InstanceAveragerNode(object):
         self.publisher.publish(pinstance)
 
     def run(self):
+        """Run the node executing all its callbacks."""
         rospy.spin()
 
     def shutdown(self):
