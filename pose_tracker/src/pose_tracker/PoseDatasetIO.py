@@ -70,7 +70,7 @@ def filename_with_extension(name, extension):
 
 class PoseDatasetIO(object):
 
-    """Class that that reads/writes data to a dataset containing poses"""
+    """Class that that reads/writes data to a dataset containing poses."""
 
     def __init__(self, *args, **kwargs):
         """
@@ -156,7 +156,7 @@ class PoseDatasetIO(object):
     # def prepare_dataset(self, **kwargs):
     def fill_metadata(self, **kwargs):
         """
-        Fills the metadata of the dataset.
+        Fill the metadata of the dataset.
 
         Parameters
         ----------
