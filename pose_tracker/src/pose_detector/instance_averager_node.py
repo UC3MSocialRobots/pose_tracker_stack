@@ -49,8 +49,8 @@ class InstanceAveragerNode():
     def __init__(self, **kwargs):
         """Constructor.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         nodename : str (Optional)
             The name of the node
         """
