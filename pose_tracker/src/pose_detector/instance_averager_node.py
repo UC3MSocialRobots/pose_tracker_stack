@@ -39,7 +39,7 @@ def load_params(params):
         raise
 
 
-class InstanceAveragerNode():
+class InstanceAveragerNode(object):
 
     """Node that processes skeleton messages and publishes them as instances.
 
