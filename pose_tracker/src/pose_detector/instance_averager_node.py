@@ -32,7 +32,7 @@ METHODS = {'mean': pd.DataFrame.mean,
 def load_params(params):
     """Load parameters that will be used by the node."""
     try:
-        for pname, pvalue in get_parameters(params):
+        for _, pvalue in get_parameters(params):
             yield pvalue
     except ParamNotFoundError, e:
         logerr(e)
@@ -40,13 +40,20 @@ def load_params(params):
 
 
 class InstanceAveragerNode():
+
     """Node that processes skeleton messages and publishes them as instances.
 
     It uses an L{InstanceBuilder} to convert the skeletons to instances.
-
-    :keyword nodename: The name of the node
     """
+
     def __init__(self, **kwargs):
+        """Constructor.
+
+        Parameters:
+        -----------
+        nodename : str (Optional)
+            The name of the node
+        """
         name = kwargs.get('node_name', _DEFAULT_NAME)
         rospy.init_node(name)
         self.node_name = rospy.get_name()
