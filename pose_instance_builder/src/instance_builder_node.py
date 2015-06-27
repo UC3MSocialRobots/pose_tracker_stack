@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""
+Node that processes skeleton messages and publishes them as instances.
+
+:author: Victor Gonzalez
+"""
+
 import roslib
 roslib.load_manifest('pose_instance_builder')
 import rospy
@@ -17,7 +23,7 @@ _NODE_PARAMS = ['builder_type', 'skeleton_topic']
 
 
 def load_params(params):
-    ''' loads parameters that will be used by the node '''
+    """Loads parameters that will be used by the node."""
     try:
         for _, pvalue in get_parameters(params):
             yield pvalue
@@ -28,13 +34,15 @@ def load_params(params):
 
 class InstanceBuilderNode(object):
 
-    ''' Node that processes skeleton messages and publishes them as instances
+    """
+    Node that processes skeleton messages and publishes them as instances.
 
-        It uses an L{InstanceBuilder} to convert the skeletons to instances.
-        @keyword nodename: The name of the node
-    '''
+    It uses an L{InstanceBuilder} to convert the skeletons to instances.
+    @keyword nodename: The name of the node
+    """
 
     def __init__(self, **kwargs):
+        """Constructor."""
         name = kwargs.get('node_name', _DEFAULT_NAME)
         rospy.init_node(name)
         self.node_name = rospy.get_name()
@@ -57,19 +65,24 @@ class InstanceBuilderNode(object):
         self.publisher = rospy.Publisher('pose_instance', PoseInstance)
 
     def skel_cb(self, msg):
+        """Callback for skeleton msgs.
+
+        Publishes an instance from a skeelton msg."""
         with eh(logger=loginfo,
                 log_msg='Instance not published. '):
             pose_instance = self.builder.parse_msg(msg, self.label)
             self.publisher.publish(pose_instance)
 
     def label_cb(self, label):
+        """Store the received label."""
         self.label = label.data
 
     def run(self):
+        """Ros spin."""
         rospy.spin()
 
     def shutdown(self):
-        ''' Closes the node '''
+        """Close the node."""
         loginfo('Shutting down ' + rospy.get_name() + ' node.')
 
 
