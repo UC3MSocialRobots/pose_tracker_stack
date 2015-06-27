@@ -76,7 +76,6 @@ class PoseDatasetIO(object):
         """
         Init the class.
 
-
         Parameters
         ----------
         dataset : str
