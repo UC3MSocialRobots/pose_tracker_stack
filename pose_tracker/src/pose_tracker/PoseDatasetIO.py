@@ -46,7 +46,9 @@ def filename_with_extension(name, extension):
 
 
 class PoseDatasetIO(object):
+
     """Class that that reads/writes data to a dataset containing poses"""
+
     def __init__(self, *args, **kwargs):
         """
         Init the class.
